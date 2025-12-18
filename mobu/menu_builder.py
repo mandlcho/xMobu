@@ -23,17 +23,18 @@ class MenuBuilder:
         print(f"[xMobu] Building '{self.menu_name}' menu...")
         logger.info("Building xMobu menu...")
 
-        # Create main menu
-        print(f"[xMobu] Creating main menu: {self.menu_name}")
-        self.main_menu = self.menu_manager.GetMenu(self.menu_name)
-        if not self.main_menu:
-            self.main_menu = self.menu_manager.InsertLast(None, self.menu_name)
-            print(f"[xMobu] Main menu '{self.menu_name}' created")
-        else:
-            print(f"[xMobu] Main menu '{self.menu_name}' already exists")
+        # Remove existing menu completely before rebuilding
+        print(f"[xMobu] Checking for existing '{self.menu_name}' menu...")
+        existing_menu = self.menu_manager.GetMenu(self.menu_name)
+        if existing_menu:
+            print(f"[xMobu] Removing existing '{self.menu_name}' menu...")
+            self.menu_manager.Remove(self.menu_name)
+            print(f"[xMobu] Old menu removed")
 
-        # Clear existing items (for reload scenarios)
-        self._clear_menu(self.main_menu)
+        # Create fresh menu
+        print(f"[xMobu] Creating new '{self.menu_name}' menu...")
+        self.main_menu = self.menu_manager.InsertLast(None, self.menu_name)
+        print(f"[xMobu] Main menu '{self.menu_name}' created")
 
         # Get enabled categories from config
         categories = config.get('mobu.tool_categories', [])
@@ -56,11 +57,6 @@ class MenuBuilder:
         print(f"[xMobu] Menu '{self.menu_name}' built successfully")
         logger.info("xMobu menu built successfully")
 
-    def _clear_menu(self, menu):
-        """Clear all items from a menu"""
-        # Note: MotionBuilder doesn't provide a direct way to clear menus
-        # This is a limitation we work around by rebuilding
-        pass
 
     def _build_category_menu(self, category_name):
         """Build a submenu for a specific tool category"""
