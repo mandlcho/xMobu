@@ -67,7 +67,7 @@ def reload_xmobu():
 
         print(f"  ✓ {len(tool_modules)} tool module(s) reloaded")
 
-        # Reload menu builder and startup
+        # Reload menu builder (but don't rebuild menu - MotionBuilder can't delete menus)
         print("→ Reloading menu builder...")
         import mobu.menu_builder
         import mobu.startup
@@ -75,15 +75,11 @@ def reload_xmobu():
         importlib.reload(mobu.startup)
         print("  ✓ Menu builder reloaded")
 
-        # Rebuild menu
-        print("→ Rebuilding menu...")
-        from mobu.menu_builder import MenuBuilder
-        builder = MenuBuilder()
-        builder.build_menu()
-        print("  ✓ Menu rebuilt")
-
         print("="*50)
-        print("✓ RELOAD COMPLETE - Changes applied!")
+        print("✓ RELOAD COMPLETE - Tool changes applied!")
+        print("="*50)
+        print("NOTE: Menu structure changes require MotionBuilder restart")
+        print("NOTE: Tool code changes are active - test your tools!")
         print("="*50 + "\n")
 
         return True

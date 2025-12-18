@@ -18,21 +18,29 @@ class MenuBuilder:
         self.menu_name = config.get('mobu.menu_name', 'xMobu')
         self.main_menu = None
 
-    def build_menu(self):
+    def build_menu(self, force_rebuild=False):
         """Build the complete xMobu menu structure"""
         print(f"[xMobu] Building '{self.menu_name}' menu...")
         logger.info("Building xMobu menu...")
 
-        # Remove existing menu completely before rebuilding
+        # Check if menu already exists
         print(f"[xMobu] Checking for existing '{self.menu_name}' menu...")
         existing_menu = self.menu_manager.GetMenu(self.menu_name)
-        if existing_menu:
-            print(f"[xMobu] Removing existing '{self.menu_name}' menu...")
-            self.menu_manager.Remove(self.menu_name)
-            print(f"[xMobu] Old menu removed")
 
-        # Create fresh menu
-        print(f"[xMobu] Creating new '{self.menu_name}' menu...")
+        if existing_menu and not force_rebuild:
+            print(f"[xMobu] Menu already exists - skipping rebuild")
+            print(f"[xMobu] NOTE: MotionBuilder doesn't support deleting menus")
+            print(f"[xMobu] NOTE: To see menu changes, restart MotionBuilder")
+            print(f"[xMobu] NOTE: Tool code changes are still reloaded!")
+            logger.info("Skipping menu rebuild - menu already exists")
+            return
+
+        if existing_menu and force_rebuild:
+            print(f"[xMobu] WARNING: Menu already exists but rebuild forced")
+            print(f"[xMobu] WARNING: This will create duplicate menu items!")
+
+        # Create menu
+        print(f"[xMobu] Creating '{self.menu_name}' menu...")
         self.main_menu = self.menu_manager.InsertLast(None, self.menu_name)
         print(f"[xMobu] Main menu '{self.menu_name}' created")
 
@@ -242,23 +250,22 @@ class MenuBuilder:
             importlib.reload(mobu.tools.unreal.content_browser)
             print("[xMobu] Tool modules reloaded")
 
-            # Reload menu builder
-            print("[xMobu] Reloading menu builder...")
-            import mobu.menu_builder
-            importlib.reload(mobu.menu_builder)
-
-            # Rebuild menu with fresh MenuBuilder
-            print("[xMobu] Rebuilding menu...")
-            from mobu.menu_builder import MenuBuilder
-            new_builder = MenuBuilder()
-            new_builder.build_menu()
-
             print("[xMobu] ========================================")
             print("[xMobu] Reload completed successfully!")
             print("[xMobu] ========================================")
+            print("[xMobu] NOTE: Menu structure cannot be changed without restart")
+            print("[xMobu] NOTE: Tool code changes are active - test your tools!")
+            print("[xMobu] ========================================")
 
             from pyfbsdk import FBMessageBox
-            FBMessageBox("xMobu", "xMobu reloaded successfully!\n\nAll changes applied.", "OK")
+            FBMessageBox(
+                "xMobu Reloaded",
+                "Tool modules reloaded successfully!\n\n"
+                "Tool code changes are now active.\n\n"
+                "Note: Menu structure changes require\n"
+                "restarting MotionBuilder (MotionBuilder API limitation).",
+                "OK"
+            )
 
         except Exception as e:
             print(f"[xMobu ERROR] Failed to reload: {str(e)}")
