@@ -1,0 +1,28 @@
+{
+  "name": "Example_Biped",
+  "version": "1.0",
+  "description": "Example biped character mapping template",
+  "mappings": {
+    "Reference": "Root",
+    "Hips": "Hips",
+    "Spine": "Spine",
+    "Spine1": "Spine1",
+    "Spine2": "Spine2",
+    "Neck": "Neck",
+    "Head": "Head",
+    "LeftShoulder": "LeftShoulder",
+    "LeftArm": "LeftArm",
+    "LeftForeArm": "LeftForeArm",
+    "LeftHand": "LeftHand",
+    "RightShoulder": "RightShoulder",
+    "RightArm": "RightArm",
+    "RightForeArm": "RightForeArm",
+    "RightHand": "RightHand",
+    "LeftUpLeg": "LeftUpLeg",
+    "LeftLeg": "LeftLeg",
+    "LeftFoot": "LeftFoot",
+    "RightUpLeg": "RightUpLeg",
+    "RightLeg": "RightLeg",
+    "RightFoot": "RightFoot"
+  }
+}
