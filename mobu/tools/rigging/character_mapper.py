@@ -194,67 +194,74 @@ class CharacterMapperUI(FBTool):
 
     def _build_actions_panel(self, layout):
         """Build the actions panel"""
-        # Characterize button
+        # Column positions
         x_col1 = FBAddRegionParam(5, FBAttachType.kFBAttachLeft, "")
         x_col2 = FBAddRegionParam(0, FBAttachType.kFBAttachRight, "")
         x_col2_start = FBAddRegionParam(-205, FBAttachType.kFBAttachRight, "")
 
-        y_row1 = FBAddRegionParam(5, FBAttachType.kFBAttachTop, "")
-        y_row2 = FBAddRegionParam(35, FBAttachType.kFBAttachTop, "")
-        y_row3 = FBAddRegionParam(65, FBAttachType.kFBAttachTop, "")
-        y_row4 = FBAddRegionParam(95, FBAttachType.kFBAttachTop, "")
-        y_h = FBAddRegionParam(30, FBAttachType.kFBAttachNone, "")
+        # Row positions (top and bottom for each row)
+        y_row1_top = FBAddRegionParam(5, FBAttachType.kFBAttachTop, "")
+        y_row1_bot = FBAddRegionParam(35, FBAttachType.kFBAttachTop, "")
+
+        y_row2_top = FBAddRegionParam(40, FBAttachType.kFBAttachTop, "")
+        y_row2_bot = FBAddRegionParam(70, FBAttachType.kFBAttachTop, "")
+
+        y_row3_top = FBAddRegionParam(75, FBAttachType.kFBAttachTop, "")
+        y_row3_bot = FBAddRegionParam(105, FBAttachType.kFBAttachTop, "")
+
+        y_row4_top = FBAddRegionParam(110, FBAttachType.kFBAttachTop, "")
+        y_row4_bot = FBAddRegionParam(140, FBAttachType.kFBAttachTop, "")
 
         # Characterize
         char_btn = FBButton()
         char_btn.Caption = "Create Character"
         char_btn.OnClick.Add(self.OnCharacterize)
-        layout.AddRegion("char_btn", "char_btn", x_col1, y_row1, x_col2_start, y_row1, 0, y_h)
+        layout.AddRegion("char_btn", "char_btn", x_col1, y_row1_top, x_col2_start, y_row1_bot)
         layout.SetControl("char_btn", char_btn)
 
         # Clear
         clear_btn = FBButton()
         clear_btn.Caption = "Clear Mapping"
         clear_btn.OnClick.Add(self.OnClearMapping)
-        layout.AddRegion("clear_btn", "clear_btn", x_col2_start, y_row1, x_col2, y_row1, 0, y_h)
+        layout.AddRegion("clear_btn", "clear_btn", x_col2_start, y_row1_top, x_col2, y_row1_bot)
         layout.SetControl("clear_btn", clear_btn)
 
         # Preset name
         preset_label = FBLabel()
         preset_label.Caption = "Preset Name:"
-        layout.AddRegion("preset_label", "preset_label", x_col1, y_row2, x_col2_start, y_row2, 0, y_h)
+        layout.AddRegion("preset_label", "preset_label", x_col1, y_row2_top, x_col2_start, y_row2_bot)
         layout.SetControl("preset_label", preset_label)
 
         self.preset_name = FBEdit()
         self.preset_name.Text = "MyCharacter"
-        layout.AddRegion("preset_name", "preset_name", x_col2_start, y_row2, x_col2, y_row2, 0, y_h)
+        layout.AddRegion("preset_name", "preset_name", x_col2_start, y_row2_top, x_col2, y_row2_bot)
         layout.SetControl("preset_name", self.preset_name)
 
         # Save preset
         save_btn = FBButton()
         save_btn.Caption = "Save Preset"
         save_btn.OnClick.Add(self.OnSavePreset)
-        layout.AddRegion("save_btn", "save_btn", x_col1, y_row3, x_col2_start, y_row3, 0, y_h)
+        layout.AddRegion("save_btn", "save_btn", x_col1, y_row3_top, x_col2_start, y_row3_bot)
         layout.SetControl("save_btn", save_btn)
 
         # Load preset
         load_btn = FBButton()
         load_btn.Caption = "Load Preset"
         load_btn.OnClick.Add(self.OnLoadPreset)
-        layout.AddRegion("load_btn", "load_btn", x_col2_start, y_row3, x_col2, y_row3, 0, y_h)
+        layout.AddRegion("load_btn", "load_btn", x_col2_start, y_row3_top, x_col2, y_row3_bot)
         layout.SetControl("load_btn", load_btn)
 
         # Export/Import
         export_btn = FBButton()
         export_btn.Caption = "Export Preset..."
         export_btn.OnClick.Add(self.OnExportPreset)
-        layout.AddRegion("export_btn", "export_btn", x_col1, y_row4, x_col2_start, y_row4, 0, y_h)
+        layout.AddRegion("export_btn", "export_btn", x_col1, y_row4_top, x_col2_start, y_row4_bot)
         layout.SetControl("export_btn", export_btn)
 
         import_btn = FBButton()
         import_btn.Caption = "Import Preset..."
         import_btn.OnClick.Add(self.OnImportPreset)
-        layout.AddRegion("import_btn", "import_btn", x_col2_start, y_row4, x_col2, y_row4, 0, y_h)
+        layout.AddRegion("import_btn", "import_btn", x_col2_start, y_row4_top, x_col2, y_row4_bot)
         layout.SetControl("import_btn", import_btn)
 
     def LoadSceneModels(self):
