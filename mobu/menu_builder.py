@@ -74,25 +74,41 @@ class MenuBuilder:
         # Build the category menu path for sub-items
         category_menu_path = f"{self.menu_name}/{category_name}"
 
+        # Store callbacks by menu item name for this category
+        category_callbacks = {}
+
         if not tools:
             # Add placeholder if no tools found
             print(f"[xMobu]   No tools found for: {category_name}")
-            placeholder = self.menu_manager.InsertLast(
-                category_menu_path,
-                f"No {category_name} tools found"
-            )
-            placeholder.OnMenuActivate.Add(self._no_tools_callback)
+            item_name = f"No {category_name} tools found"
+            self.menu_manager.InsertLast(category_menu_path, item_name)
+            category_callbacks[item_name] = self._no_tools_callback
         else:
             print(f"[xMobu]   Found {len(tools)} tool(s) in {category_name}")
             # Add each tool to the menu
             for tool in tools:
-                tool_item = self.menu_manager.InsertLast(
-                    category_menu_path,
-                    tool['name']
-                )
-                # Bind the tool's execute function
-                tool_item.OnMenuActivate.Add(tool['callback'])
+                self.menu_manager.InsertLast(category_menu_path, tool['name'])
+                category_callbacks[tool['name']] = tool['callback']
                 print(f"[xMobu]     - {tool['name']}")
+
+        # Get the category menu and register a single callback handler
+        menu_obj = self.menu_manager.GetMenu(category_menu_path)
+        if menu_obj:
+            # Create a closure that captures the category callbacks
+            def menu_handler(control, event):
+                callback = category_callbacks.get(event.Name)
+                if callback:
+                    try:
+                        callback(control, event)
+                    except Exception as e:
+                        print(f"[xMobu ERROR] Tool '{event.Name}' failed: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                else:
+                    print(f"[xMobu] No handler for menu item: {event.Name}")
+
+            menu_obj.OnMenuActivate.Add(menu_handler)
+            print(f"[xMobu]   Registered menu handler for {category_name}")
 
     def _discover_tools(self, category_name):
         """
@@ -149,20 +165,39 @@ class MenuBuilder:
 
     def _add_utility_items(self):
         """Add utility menu items (settings, reload, about, etc.)"""
+        # Build utility callbacks dictionary
+        utility_callbacks = {}
+
         # Settings
-        settings_item = self.menu_manager.InsertLast(self.menu_name, "Settings...")
-        settings_item.OnMenuActivate.Add(self._open_settings)
+        self.menu_manager.InsertLast(self.menu_name, "Settings...")
+        utility_callbacks["Settings..."] = self._open_settings
 
         # Reload
-        reload_item = self.menu_manager.InsertLast(self.menu_name, "Reload xMobu")
-        reload_item.OnMenuActivate.Add(self._reload_xmobu)
+        self.menu_manager.InsertLast(self.menu_name, "Reload xMobu")
+        utility_callbacks["Reload xMobu"] = self._reload_xmobu
 
         # Separator
         self.menu_manager.InsertLast(self.menu_name, "")
 
         # About
-        about_item = self.menu_manager.InsertLast(self.menu_name, "About xMobu")
-        about_item.OnMenuActivate.Add(self._show_about)
+        self.menu_manager.InsertLast(self.menu_name, "About xMobu")
+        utility_callbacks["About xMobu"] = self._show_about
+
+        # Register callback handler for main menu
+        main_menu_obj = self.menu_manager.GetMenu(self.menu_name)
+        if main_menu_obj:
+            def utility_handler(control, event):
+                callback = utility_callbacks.get(event.Name)
+                if callback:
+                    try:
+                        callback(control, event)
+                    except Exception as e:
+                        print(f"[xMobu ERROR] Utility '{event.Name}' failed: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+
+            main_menu_obj.OnMenuActivate.Add(utility_handler)
+            print("[xMobu] Registered utility menu handler")
 
     def _no_tools_callback(self, control, event):
         """Callback for placeholder menu items"""
