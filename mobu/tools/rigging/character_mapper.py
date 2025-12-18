@@ -145,7 +145,7 @@ class CharacterMapperUI(FBTool):
         y_list_bottom = FBAddRegionParam(-5, FBAttachType.kFBAttachBottom, "")
 
         self.mapping_list = FBList()
-        self.mapping_list.Style = FBListStyle.kFBDropDownList
+        self.mapping_list.Style = FBListStyle.kFBVerticalList
         self.mapping_list.MultiSelect = False
 
         layout.AddRegion("mappings", "mappings", x, y_list_top, w, y_list_bottom)
@@ -179,7 +179,7 @@ class CharacterMapperUI(FBTool):
 
         self.objects_list = FBList()
         self.objects_list.MultiSelect = False
-        self.objects_list.OnDblClick.Add(self.OnAssignBone)
+        self.objects_list.Style = FBListStyle.kFBVerticalList
 
         layout.AddRegion("objects_list", "objects_list", x, y_list_top, w, y_list_bottom)
         layout.SetControl("objects_list", self.objects_list)
