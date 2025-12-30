@@ -8,14 +8,14 @@ import json
 
 try:
     from PySide2 import QtWidgets, QtCore, QtUiTools
-    from PySide2.QtWidgets import QDialog, QMessageBox
-    from PySide2.QtCore import QFile
+    from PySide2.QtWidgets import QDialog, QMessageBox, QApplication
+    from PySide2.QtCore import QFile, Qt
 except ImportError:
     try:
         from PySide import QtGui as QtWidgets
         from PySide import QtCore, QtUiTools
-        from PySide.QtGui import QDialog, QMessageBox
-        from PySide.QtCore import QFile
+        from PySide.QtGui import QDialog, QMessageBox, QApplication
+        from PySide.QtCore import QFile, Qt
     except ImportError:
         print("[Constraint Manager Qt] ERROR: Neither PySide2 nor PySide found")
         QtWidgets = None
@@ -32,6 +32,19 @@ TOOL_NAME = "Constraint Manager"
 _constraint_manager_dialog = None
 
 
+def get_mobu_main_window():
+    """Get MotionBuilder's main window to use as parent"""
+    try:
+        app = QApplication.instance()
+        if app:
+            for widget in app.topLevelWidgets():
+                if widget.objectName() == "MotionBuilder":
+                    return widget
+        return None
+    except:
+        return None
+
+
 def execute(control, event):
     """Execute the Constraint Manager tool"""
     global _constraint_manager_dialog
@@ -44,7 +57,8 @@ def execute(control, event):
         return
 
     print("[Constraint Manager Qt] Creating new dialog")
-    _constraint_manager_dialog = ConstraintManagerDialog()
+    parent = get_mobu_main_window()
+    _constraint_manager_dialog = ConstraintManagerDialog(parent)
     _constraint_manager_dialog.show()
 
 
@@ -53,6 +67,8 @@ class ConstraintManagerDialog(QDialog):
 
     def __init__(self, parent=None):
         super(ConstraintManagerDialog, self).__init__(parent)
+        # Set window flags to make it a proper dialog
+        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
         self.selected_objects = []
         self.constraint_sources = []
         self.constraint_weight = 100.0

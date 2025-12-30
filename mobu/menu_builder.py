@@ -248,7 +248,6 @@ class MenuBuilder:
             # Reload tool modules
             print("[xMobu] Reloading tool modules...")
             import mobu.tools.animation.keyframe_tools
-            import mobu.tools.rigging.constraint_helper
             import mobu.tools.rigging.character_mapper
             import mobu.tools.pipeline.scene_manager
             import mobu.tools.pipeline.settings_qt
@@ -256,7 +255,6 @@ class MenuBuilder:
             import mobu.tools.unreal.content_browser
 
             importlib.reload(mobu.tools.animation.keyframe_tools)
-            importlib.reload(mobu.tools.rigging.constraint_helper)
             importlib.reload(mobu.tools.rigging.character_mapper)
             importlib.reload(mobu.tools.rigging.constraint_manager_qt)
             importlib.reload(mobu.tools.pipeline.scene_manager)

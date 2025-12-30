@@ -9,14 +9,14 @@ import os
 
 try:
     from PySide2 import QtWidgets, QtCore, QtUiTools
-    from PySide2.QtWidgets import QDialog, QFileDialog, QMessageBox
-    from PySide2.QtCore import QFile
+    from PySide2.QtWidgets import QDialog, QFileDialog, QMessageBox, QApplication
+    from PySide2.QtCore import QFile, Qt
 except ImportError:
     try:
         from PySide import QtGui as QtWidgets
         from PySide import QtCore, QtUiTools
-        from PySide.QtGui import QDialog, QFileDialog, QMessageBox
-        from PySide.QtCore import QFile
+        from PySide.QtGui import QDialog, QFileDialog, QMessageBox, QApplication
+        from PySide.QtCore import QFile, Qt
     except ImportError:
         print("[Settings Qt] ERROR: Neither PySide2 nor PySide found")
         QtWidgets = None
@@ -24,10 +24,23 @@ except ImportError:
 from core.config import config
 from core.logger import logger
 
-TOOL_NAME = "xMobu Settings (Qt)"
+TOOL_NAME = "xMobu Settings"
 
 # Global reference to prevent garbage collection
 _settings_dialog = None
+
+
+def get_mobu_main_window():
+    """Get MotionBuilder's main window to use as parent"""
+    try:
+        app = QApplication.instance()
+        if app:
+            for widget in app.topLevelWidgets():
+                if widget.objectName() == "MotionBuilder":
+                    return widget
+        return None
+    except:
+        return None
 
 
 def execute(control, event):
@@ -42,7 +55,8 @@ def execute(control, event):
         return
 
     print("[Settings Qt] Creating new settings dialog")
-    _settings_dialog = SettingsDialog()
+    parent = get_mobu_main_window()
+    _settings_dialog = SettingsDialog(parent)
     _settings_dialog.show()
 
 
@@ -51,6 +65,8 @@ class SettingsDialog(QDialog):
 
     def __init__(self, parent=None):
         super(SettingsDialog, self).__init__(parent)
+        # Set window flags to make it a proper dialog
+        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
         self.workspaces = []
 
         # Load the UI file
@@ -396,4 +412,5 @@ class SettingsDialog(QDialog):
     def on_apply_and_close(self):
         """Save settings and close"""
         self.on_save_settings()
-        print("[Settings Qt] Settings applied")
+        print("[Settings Qt] Settings applied, closing window")
+        self.close()
