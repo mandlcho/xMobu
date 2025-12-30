@@ -176,6 +176,10 @@ class MenuBuilder:
         self.menu_manager.InsertLast(self.menu_name, "Settings...")
         utility_callbacks["Settings..."] = self._open_settings
 
+        # Settings (Qt Designer version)
+        self.menu_manager.InsertLast(self.menu_name, "Settings (Qt)...")
+        utility_callbacks["Settings (Qt)..."] = self._open_settings_qt
+
         # Reload
         self.menu_manager.InsertLast(self.menu_name, "Reload xMobu")
         utility_callbacks["Reload xMobu"] = self._reload_xmobu
@@ -221,6 +225,22 @@ class MenuBuilder:
                 "OK"
             )
 
+    def _open_settings_qt(self, control, event):
+        """Open Qt Designer settings dialog"""
+        try:
+            from mobu.tools.pipeline.settings_qt import execute
+            execute(control, event)
+        except Exception as e:
+            from pyfbsdk import FBMessageBox
+            print(f"[xMobu ERROR] Failed to open Qt settings: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            FBMessageBox(
+                "Error",
+                f"Failed to open Qt settings:\n{str(e)}",
+                "OK"
+            )
+
     def _reload_xmobu(self, control, event):
         """Reload xMobu system"""
         print("[xMobu] ========================================")
@@ -250,6 +270,7 @@ class MenuBuilder:
             import mobu.tools.rigging.character_mapper
             import mobu.tools.pipeline.scene_manager
             import mobu.tools.pipeline.settings
+            import mobu.tools.pipeline.settings_qt
             import mobu.tools.unreal.content_browser
 
             importlib.reload(mobu.tools.animation.keyframe_tools)
@@ -257,6 +278,7 @@ class MenuBuilder:
             importlib.reload(mobu.tools.rigging.character_mapper)
             importlib.reload(mobu.tools.pipeline.scene_manager)
             importlib.reload(mobu.tools.pipeline.settings)
+            importlib.reload(mobu.tools.pipeline.settings_qt)
             importlib.reload(mobu.tools.unreal.content_browser)
             print("[xMobu] Tool modules reloaded")
 
