@@ -5,7 +5,7 @@ Generates random markers and nulls for testing constraints and other tools
 
 import random
 from pyfbsdk import (
-    FBModelMarker, FBModelNull, FBVector3d, FBSystem, FBMessageBox,
+    FBModelMarker, FBModelNull, FBVector3d, FBColor, FBSystem, FBMessageBox,
     FBMarkerLook
 )
 from core.logger import logger
@@ -63,7 +63,7 @@ def execute(control, event):
             r = random.uniform(0.3, 1.0)
             g = random.uniform(0.3, 1.0)
             b = random.uniform(0.3, 1.0)
-            obj.Color = FBVector3d(r, g, b)
+            obj.Color = FBColor(r, g, b)
 
             obj.Show = True
             created_objects.append(obj)
