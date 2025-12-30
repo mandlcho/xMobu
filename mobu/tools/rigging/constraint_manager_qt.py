@@ -237,13 +237,19 @@ class ConstraintManagerDialog(QDialog):
         self.constraint_weight = float(value)
         self.weightValueLabel.setText(f"{value}%")
 
-    def on_constraint_type_changed(self):
+    def on_constraint_type_changed(self, index):
         """Called when constraint type selection changes"""
+        print(f"[Constraint Manager Qt] Constraint type changed to index: {index}")
         self.update_constraint_instructions()
 
     def update_constraint_instructions(self):
         """Update the instructions label based on selected constraint type"""
+        if not self.constraintInstructionsLabel:
+            print("[Constraint Manager Qt] WARNING: Instructions label not found")
+            return
+
         constraint_type = self.constraintTypeCombo.currentText()
+        print(f"[Constraint Manager Qt] Updating instructions for: {constraint_type}")
 
         # Define instructions for each constraint type
         instructions = {
@@ -269,7 +275,7 @@ class ConstraintManagerDialog(QDialog):
 
         instruction_text = instructions.get(constraint_type, "Select a constraint type")
         self.constraintInstructionsLabel.setText(instruction_text)
-        print(f"[Constraint Manager Qt] Updated instructions for: {constraint_type}")
+        print(f"[Constraint Manager Qt] Instructions updated to: {instruction_text[:50]}...")
 
     def on_create_constraint(self):
         """Create constraint based on selected type"""
