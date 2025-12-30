@@ -1,12 +1,11 @@
 """
 Random Objects Generator - Debug Tool
-Generates random markers and shapes for testing constraints and other tools
+Generates random markers and nulls for testing constraints and other tools
 """
 
 import random
 from pyfbsdk import (
-    FBModelMarker, FBModelCube, FBModelSphere, FBModelCylinder,
-    FBVector3d, FBSystem, FBMessageBox
+    FBModelMarker, FBModelNull, FBVector3d, FBSystem, FBMessageBox
 )
 from core.logger import logger
 
@@ -14,37 +13,39 @@ TOOL_NAME = "Random Objects Generator"
 
 
 def execute(control, event):
-    """Generate random markers and shapes for testing"""
+    """Generate random markers and nulls for testing"""
     try:
         # Configuration
         num_objects = 10
         position_range = 200  # Units from origin
         marker_size = 10.0
-        shape_size = 20.0
+        null_size = 20.0
 
         created_objects = []
 
         print(f"[Random Objects] Generating {num_objects} random objects...")
 
         for i in range(num_objects):
-            # Randomly choose object type
-            obj_type = random.choice(['marker', 'cube', 'sphere', 'cylinder'])
+            # Randomly choose object type (markers or nulls with different looks)
+            obj_type = random.choice(['marker', 'null_cube', 'null_sphere', 'null_cross'])
 
             # Create object based on type
             if obj_type == 'marker':
                 obj = FBModelMarker(f"DebugMarker_{i+1}")
                 obj.Size = marker_size
                 obj.Look = random.choice([0, 1, 2, 3, 4])  # Different marker styles
-            elif obj_type == 'cube':
-                obj = FBModelCube(f"DebugCube_{i+1}")
-                obj.Size = shape_size
-            elif obj_type == 'sphere':
-                obj = FBModelSphere(f"DebugSphere_{i+1}")
-                obj.Radius = shape_size / 2
-            else:  # cylinder
-                obj = FBModelCylinder(f"DebugCylinder_{i+1}")
-                obj.Radius = shape_size / 2
-                obj.Height = shape_size
+            elif obj_type == 'null_cube':
+                obj = FBModelNull(f"DebugNull_Cube_{i+1}")
+                obj.Size = null_size
+                obj.Look = 0  # Cube look
+            elif obj_type == 'null_sphere':
+                obj = FBModelNull(f"DebugNull_Sphere_{i+1}")
+                obj.Size = null_size
+                obj.Look = 1  # Sphere look
+            else:  # null_cross
+                obj = FBModelNull(f"DebugNull_Cross_{i+1}")
+                obj.Size = null_size
+                obj.Look = 2  # Cross look
 
             # Set random position
             x = random.uniform(-position_range, position_range)
@@ -70,7 +71,6 @@ def execute(control, event):
             print(f"[Random Objects]   Created {obj_type}: {obj.Name} at ({x:.1f}, {y:.1f}, {z:.1f})")
 
         # Create a null to group them
-        from pyfbsdk import FBModelNull
         group_null = FBModelNull("DebugObjects_Group")
         group_null.Show = True
 
@@ -84,7 +84,7 @@ def execute(control, event):
             "Objects Created",
             f"Generated {len(created_objects)} random objects!\n\n"
             f"Objects are grouped under: {group_null.Name}\n\n"
-            f"Types: Markers, Cubes, Spheres, Cylinders\n"
+            f"Types: Markers and Nulls (Cube, Sphere, Cross)\n"
             f"Range: {position_range} units from origin",
             "OK"
         )

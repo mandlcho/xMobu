@@ -103,9 +103,9 @@ class ConstraintManagerDialog(QDialog):
         try:
             # Set window properties
             self.setWindowTitle("Constraint Manager")
-            self.resize(500, 450)
-            self.setMinimumSize(500, 450)
-            self.setMaximumSize(700, 600)
+            self.resize(500, 500)
+            self.setMinimumSize(500, 500)
+            self.setMaximumSize(700, 650)
 
             loader = QtUiTools.QUiLoader()
             file = QFile(ui_file)
