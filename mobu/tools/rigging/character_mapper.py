@@ -702,26 +702,24 @@ def execute(control, event):
     """Show the Character Mapper tool"""
     global _active_tool_instance
 
-    # Kill previous instance if it exists
+    tool_name = "Character Mapper"
+
+    # Check if we already have an instance
     if _active_tool_instance is not None:
+        print(f"[Character Mapper] Instance already exists, destroying it...")
         try:
-            print("[Character Mapper] Closing previous instance...")
-            # Properly destroy the tool window
-            if hasattr(_active_tool_instance, 'OnDestroy'):
-                _active_tool_instance.OnDestroy()
-            # Clear the tool's parent to remove it from UI
-            _active_tool_instance.Parent = None
-            # Explicitly destroy
-            _active_tool_instance.Destroy()
+            # Try to destroy the tool using FBDestroy
+            from pyfbsdk import FBDestroy
+            FBDestroy(_active_tool_instance)
             print("[Character Mapper] Previous instance destroyed")
         except Exception as e:
-            print(f"[Character Mapper] Warning during destroy: {e}")
+            print(f"[Character Mapper] Could not destroy: {e}")
         finally:
             _active_tool_instance = None
 
     # Create new instance
     print("[Character Mapper] Creating new instance...")
-    tool = CharacterMapperUI("Character Mapper")
+    tool = CharacterMapperUI(tool_name)
     tool.StartSizeX = 700
     tool.StartSizeY = 600
 
