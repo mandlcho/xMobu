@@ -176,6 +176,10 @@ class MenuBuilder:
         self.menu_manager.InsertLast(self.menu_name, "Settings...")
         utility_callbacks["Settings..."] = self._open_settings
 
+        # Random Objects Generator (Debug)
+        self.menu_manager.InsertLast(self.menu_name, "Random Objects Generator")
+        utility_callbacks["Random Objects Generator"] = self._random_objects
+
         # Reload
         self.menu_manager.InsertLast(self.menu_name, "Reload xMobu")
         utility_callbacks["Reload xMobu"] = self._reload_xmobu
@@ -220,6 +224,22 @@ class MenuBuilder:
             FBMessageBox(
                 "Error",
                 f"Failed to open settings:\n{str(e)}",
+                "OK"
+            )
+
+    def _random_objects(self, control, event):
+        """Generate random objects for testing"""
+        try:
+            from mobu.tools.debug.random_objects import execute
+            execute(control, event)
+        except Exception as e:
+            from pyfbsdk import FBMessageBox
+            print(f"[xMobu ERROR] Failed to generate random objects: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            FBMessageBox(
+                "Error",
+                f"Failed to generate random objects:\n{str(e)}",
                 "OK"
             )
 

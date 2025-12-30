@@ -103,9 +103,9 @@ class ConstraintManagerDialog(QDialog):
         try:
             # Set window properties
             self.setWindowTitle("Constraint Manager")
-            self.resize(500, 500)
-            self.setMinimumSize(500, 500)
-            self.setMaximumSize(700, 650)
+            self.resize(500, 450)
+            self.setMinimumSize(500, 450)
+            self.setMaximumSize(700, 600)
 
             loader = QtUiTools.QUiLoader()
             file = QFile(ui_file)
@@ -139,7 +139,6 @@ class ConstraintManagerDialog(QDialog):
                 self.setSourceButton = ui_widget.findChild(QtWidgets.QPushButton, "setSourceButton")
 
                 self.constraintTypeCombo = ui_widget.findChild(QtWidgets.QComboBox, "constraintTypeCombo")
-                self.constraintInstructionsLabel = ui_widget.findChild(QtWidgets.QLabel, "constraintInstructionsLabel")
                 self.weightSlider = ui_widget.findChild(QtWidgets.QSlider, "weightSlider")
                 self.weightValueLabel = ui_widget.findChild(QtWidgets.QLabel, "weightValueLabel")
                 self.createConstraintButton = ui_widget.findChild(QtWidgets.QPushButton, "createConstraintButton")
@@ -182,13 +181,9 @@ class ConstraintManagerDialog(QDialog):
         self.setSourceButton.clicked.connect(self.on_set_sources)
 
         # Constraint creation
-        self.constraintTypeCombo.currentIndexChanged.connect(self.on_constraint_type_changed)
         self.weightSlider.valueChanged.connect(self.on_weight_changed)
         self.createConstraintButton.clicked.connect(self.on_create_constraint)
         self.snapButton.clicked.connect(self.on_snap_constraints)
-
-        # Initialize instructions for first constraint type
-        self.update_constraint_instructions()
 
         # Templates
         self.saveTemplateButton.clicked.connect(self.on_save_template)
@@ -236,46 +231,6 @@ class ConstraintManagerDialog(QDialog):
         """Update weight label when slider changes"""
         self.constraint_weight = float(value)
         self.weightValueLabel.setText(f"{value}%")
-
-    def on_constraint_type_changed(self, index):
-        """Called when constraint type selection changes"""
-        print(f"[Constraint Manager Qt] Constraint type changed to index: {index}")
-        self.update_constraint_instructions()
-
-    def update_constraint_instructions(self):
-        """Update the instructions label based on selected constraint type"""
-        if not self.constraintInstructionsLabel:
-            print("[Constraint Manager Qt] WARNING: Instructions label not found")
-            return
-
-        constraint_type = self.constraintTypeCombo.currentText()
-        print(f"[Constraint Manager Qt] Updating instructions for: {constraint_type}")
-
-        # Define instructions for each constraint type
-        instructions = {
-            "Parent/Child": "Setup: Target inherits all transforms from source. "
-                           "1. Select source (parent) 2. Set as Source 3. Select target (child) 4. Create constraint",
-
-            "Position": "Setup: Target follows source's position only. "
-                       "1. Select source 2. Set as Source 3. Select target 4. Create constraint. "
-                       "Multiple sources will average their positions.",
-
-            "Rotation": "Setup: Target follows source's rotation only. "
-                       "1. Select source 2. Set as Source 3. Select target 4. Create constraint. "
-                       "Useful for orienting objects without affecting position.",
-
-            "Aim": "Setup: Target always aims/points at source. "
-                  "1. Select source (aim target) 2. Set as Source 3. Select target (aiming object) 4. Create constraint. "
-                  "Great for eyes, cameras, or turrets.",
-
-            "Relation": "Setup: Custom mathematical relationship. "
-                       "Creates empty constraint - use Relations Editor (Window > Relations) to define custom expressions. "
-                       "Advanced: Link any properties with math formulas."
-        }
-
-        instruction_text = instructions.get(constraint_type, "Select a constraint type")
-        self.constraintInstructionsLabel.setText(instruction_text)
-        print(f"[Constraint Manager Qt] Instructions updated to: {instruction_text[:50]}...")
 
     def on_create_constraint(self):
         """Create constraint based on selected type"""
