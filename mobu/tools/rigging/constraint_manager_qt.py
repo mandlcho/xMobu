@@ -26,7 +26,7 @@ from pyfbsdk import (
 )
 from core.logger import logger
 
-TOOL_NAME = "Constraint Manager (Qt)"
+TOOL_NAME = "Constraint Manager"
 
 # Global reference to prevent garbage collection
 _constraint_manager_dialog = None

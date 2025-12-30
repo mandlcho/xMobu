@@ -62,9 +62,9 @@ class SettingsDialog(QDialog):
         try:
             # Set window properties
             self.setWindowTitle("xMobu Settings")
-            self.resize(500, 380)
-            self.setMinimumSize(500, 380)
-            self.setMaximumSize(700, 500)
+            self.resize(480, 340)
+            self.setMinimumSize(480, 340)
+            self.setMaximumSize(600, 450)
 
             loader = QtUiTools.QUiLoader()
             file = QFile(ui_file)

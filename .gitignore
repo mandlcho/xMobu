@@ -11,3 +11,6 @@ config/local_config.json
 
 # MotionBuilder files
 *.mb~
+
+# Backup files
+*.bak
