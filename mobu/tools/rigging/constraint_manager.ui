@@ -125,14 +125,33 @@
         </item>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="1" column="0" colspan="2">
+       <widget class="QLabel" name="constraintInstructionsLabel">
+        <property name="text">
+         <string>Setup: 1. Select source object(s) 2. Click 'Set as Source(s)' 3. Select target object(s) 4. Create constraint</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+        <property name="styleSheet">
+         <string>QLabel { background-color: #f0f0f0; padding: 8px; border: 1px solid #ccc; border-radius: 4px; color: #333; }</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>40</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
        <widget class="QLabel" name="weightLabel">
         <property name="text">
          <string>Weight:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QSlider" name="weightSlider">
@@ -165,14 +184,14 @@
         </item>
        </layout>
       </item>
-      <item row="2" column="1">
+      <item row="3" column="1">
        <widget class="QPushButton" name="createConstraintButton">
         <property name="text">
          <string>Create Constraint</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="QPushButton" name="snapButton">
         <property name="text">
          <string>Snap (Active)</string>

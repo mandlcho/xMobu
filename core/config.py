@@ -56,8 +56,8 @@ class ConfigManager:
                 "tool_categories": [
                     {"name": "Animation", "enabled": True},
                     {"name": "Rigging", "enabled": True},
-                    {"name": "Pipeline", "enabled": True},
-                    {"name": "Unreal Engine", "enabled": True}
+                    {"name": "Unreal Engine", "enabled": True},
+                    {"name": "Debug", "enabled": True}
                 ]
             },
             "perforce": {
