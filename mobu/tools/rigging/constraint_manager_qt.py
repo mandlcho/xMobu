@@ -214,6 +214,18 @@ class ConstraintManagerDialog(QDialog):
 
     def auto_refresh_selection(self):
         """Auto-refresh selection from timer - only update if changed"""
+        # Check if widgets still exist before accessing them
+        try:
+            if not self.selectionList:
+                return
+            # Try to access the widget to see if it's still valid
+            _ = self.selectionList.count()
+        except RuntimeError:
+            # Widget has been deleted, stop the timer
+            if hasattr(self, 'selection_timer'):
+                self.selection_timer.stop()
+            return
+
         # Get selected models
         selected = FBModelList()
         FBGetSelectedModels(selected)
