@@ -6,7 +6,7 @@ Generates random markers and nulls for testing constraints and other tools
 import random
 from pyfbsdk import (
     FBModelMarker, FBModelNull, FBVector3d, FBSystem, FBMessageBox,
-    FBMarkerLook, FBModelNullLook
+    FBMarkerLook
 )
 from core.logger import logger
 
@@ -34,13 +34,6 @@ def execute(control, event):
             FBMarkerLook.kFBMarkerLookSphere
         ]
 
-        # Available null looks
-        null_looks = [
-            FBModelNullLook.kFBModelNullLookCube,
-            FBModelNullLook.kFBModelNullLookSphere,
-            FBModelNullLook.kFBModelNullLookCross
-        ]
-
         for i in range(num_objects):
             # Randomly choose object type (markers or nulls)
             obj_type = random.choice(['marker', 'null'])
@@ -53,7 +46,6 @@ def execute(control, event):
             else:  # null
                 obj = FBModelNull(f"DebugNull_{i+1}")
                 obj.Size = null_size
-                obj.Look = random.choice(null_looks)
 
             # Set random position
             x = random.uniform(-position_range, position_range)
