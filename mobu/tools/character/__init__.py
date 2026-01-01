@@ -1,3 +1,3 @@
 """
-Rigging Tools for xMobu
+Character Tools for xMobu
 """
