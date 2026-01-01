@@ -268,16 +268,16 @@ class MenuBuilder:
             # Reload tool modules
             print("[xMobu] Reloading tool modules...")
             import mobu.tools.animation.keyframe_tools
-            import mobu.tools.rigging.character_mapper_qt
+            import mobu.tools.character.character_mapper_qt
             import mobu.tools.pipeline.scene_manager
             import mobu.tools.pipeline._settings_qt
-            import mobu.tools.rigging.constraint_manager_qt
+            import mobu.tools.character.constraint_manager_qt
             import mobu.tools.unreal.content_browser
             import mobu.tools.debug.random_objects
 
             importlib.reload(mobu.tools.animation.keyframe_tools)
-            importlib.reload(mobu.tools.rigging.character_mapper_qt)
-            importlib.reload(mobu.tools.rigging.constraint_manager_qt)
+            importlib.reload(mobu.tools.character.character_mapper_qt)
+            importlib.reload(mobu.tools.character.constraint_manager_qt)
             importlib.reload(mobu.tools.pipeline.scene_manager)
             importlib.reload(mobu.tools.pipeline._settings_qt)
             importlib.reload(mobu.tools.unreal.content_browser)
@@ -319,7 +319,7 @@ class MenuBuilder:
 Version: {__version__}
 
 A comprehensive pipeline toolset for MotionBuilder
-with support for Animation, Rigging, Pipeline, and
+with support for Animation, Character, Pipeline, and
 Unreal Engine integration.
 
 Visit github.com/yourorg/xMobu for more information.
