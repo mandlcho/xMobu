@@ -119,33 +119,30 @@ class ConstraintManagerDialog(QDialog):
 
             file.open(QFile.ReadOnly)
             print(f"[Constraint Manager Qt] Loading UI from: {ui_file}")
-            # Load with None as parent first, then reparent via layout
-            ui_widget = loader.load(file, None)
+            # Load with `self` as parent. The loaded widget is returned.
+            ui_widget = loader.load(file, self)
             file.close()
 
             if ui_widget:
                 print(f"[Constraint Manager Qt] UI widget loaded")
 
-                # IMPORTANT: Store ui_widget as instance variable to prevent garbage collection
-                self.ui_widget = ui_widget
-
-                # Create layout and add the loaded widget
-                # QVBoxLayout(self) automatically sets this as the dialog's layout
-                # addWidget automatically reparents ui_widget to have proper ownership
+                # The loaded widget is now a child of the dialog.
+                # We add it to a layout to make it fill the dialog.
                 self.main_layout = QtWidgets.QVBoxLayout(self)
                 self.main_layout.setContentsMargins(0, 0, 0, 0)
-                self.main_layout.addWidget(self.ui_widget)
+                self.main_layout.addWidget(ui_widget)
 
-                # Store references to UI elements using findChild
-                self.selectionList = self.ui_widget.findChild(QtWidgets.QListWidget, "selectionList")
-                self.refreshButton = self.ui_widget.findChild(QtWidgets.QPushButton, "refreshButton")
-                self.setParentButton = self.ui_widget.findChild(QtWidgets.QPushButton, "setParentButton")
-                self.setChildButton = self.ui_widget.findChild(QtWidgets.QPushButton, "setChildButton")
-                self.clearSelectionButton = self.ui_widget.findChild(QtWidgets.QPushButton, "clearSelectionButton")
+                # Store references to UI elements using findChild on `self`.
+                # Since ui_widget is now a child of `self`, findChild on `self` will find them.
+                self.selectionList = self.findChild(QtWidgets.QListWidget, "selectionList")
+                self.refreshButton = self.findChild(QtWidgets.QPushButton, "refreshButton")
+                self.setParentButton = self.findChild(QtWidgets.QPushButton, "setParentButton")
+                self.setChildButton = self.findChild(QtWidgets.QPushButton, "setChildButton")
+                self.clearSelectionButton = self.findChild(QtWidgets.QPushButton, "clearSelectionButton")
 
-                self.constraintTypeCombo = self.ui_widget.findChild(QtWidgets.QComboBox, "constraintTypeCombo")
-                self.activeCheckbox = self.ui_widget.findChild(QtWidgets.QCheckBox, "activeCheckbox")
-                self.snapButton = self.ui_widget.findChild(QtWidgets.QPushButton, "snapButton")
+                self.constraintTypeCombo = self.findChild(QtWidgets.QComboBox, "constraintTypeCombo")
+                self.activeCheckbox = self.findChild(QtWidgets.QCheckBox, "activeCheckbox")
+                self.snapButton = self.findChild(QtWidgets.QPushButton, "snapButton")
 
                 # Debug: Print widget references
                 print(f"[Constraint Manager Qt] selectionList: {self.selectionList}")
@@ -155,7 +152,7 @@ class ConstraintManagerDialog(QDialog):
                 try:
                     test_count = self.selectionList.count()
                     print(f"[Constraint Manager Qt] Widget validation at creation: SUCCESS (count={test_count})")
-                except RuntimeError as e:
+                except (RuntimeError, AttributeError) as e:
                     print(f"[Constraint Manager Qt] Widget validation at creation: FAILED - {e}")
 
                 # Connect signals
@@ -323,14 +320,16 @@ class ConstraintManagerDialog(QDialog):
         """
         print("[Constraint Manager Qt] update_list_widget() called")
 
-        # Safety check: Don't execute if widgets are invalid
-        if not self._is_widget_valid():
-            print("[Constraint Manager Qt] Widget validation failed, skipping update")
+        # DEBUG: Re-find the widget each time to ensure we have a valid reference
+        selection_list = self.findChild(QtWidgets.QListWidget, "selectionList")
+
+        if not selection_list:
+            print("[Constraint Manager Qt] FATAL: Could not find 'selectionList' in UI on refresh.")
             return
 
         try:
             # Clear the list
-            self.selectionList.clear()
+            selection_list.clear()
 
             # Get all models from the scene
             self.all_scene_objects = get_all_models()
@@ -340,13 +339,13 @@ class ConstraintManagerDialog(QDialog):
 
             # Populate the list widget
             for model in self.all_scene_objects:
-                self.selectionList.addItem(model.Name)
+                selection_list.addItem(model.Name)
 
             print(f"[Constraint Manager Qt] List updated with {len(self.all_scene_objects)} objects")
 
             # Force Qt widget updates
-            self.selectionList.update()
-            self.selectionList.repaint()
+            selection_list.update()
+            selection_list.repaint()
 
             # Force MotionBuilder UI update
             FBApplication().UpdateAllWidgets()
