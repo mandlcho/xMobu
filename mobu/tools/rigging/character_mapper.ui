@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CharacterMapperWidget</class>
+ <widget class="QWidget" name="CharacterMapperWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Character Mapper</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="leftMargin">
+    <number>10</number>
+   </property>
+   <property name="topMargin">
+    <number>10</number>
+   </property>
+   <property name="rightMargin">
+    <number>10</number>
+   </property>
+   <property name="bottomMargin">
+    <number>10</number>
+   </property>
+   <property name="spacing">
+    <number>10</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="mainContentLayout">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item>
+      <widget class="QGroupBox" name="boneMappingGroup">
+       <property name="title">
+        <string>Character Bone Mapping</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QLabel" name="instructionLabel">
+          <property name="text">
+           <string>Drag bones from Scene Objects onto slots to map</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QListWidget" name="mappingList">
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="sceneObjectsGroup">
+       <property name="title">
+        <string>Scene Objects</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <layout class="QHBoxLayout" name="searchLayout">
+          <item>
+           <widget class="QLabel" name="searchLabel">
+            <property name="text">
+             <string>Search:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="searchEdit">
+            <property name="placeholderText">
+             <string>Filter objects...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QListWidget" name="objectsList">
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="refreshButton">
+          <property name="text">
+           <string>Refresh Scene</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="actionsGroup">
+     <property name="title">
+      <string>Actions</string>
+     </property>
+     <property name="maximumHeight">
+      <number>180</number>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0" colspan="2">
+       <widget class="QPushButton" name="createCharacterButton">
+        <property name="text">
+         <string>Create Character</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2" colspan="2">
+       <widget class="QPushButton" name="clearMappingButton">
+        <property name="text">
+         <string>Clear Mapping</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="presetNameLabel">
+        <property name="text">
+         <string>Preset Name:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" colspan="3">
+       <widget class="QLineEdit" name="presetNameEdit">
+        <property name="text">
+         <string>MyCharacter</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QPushButton" name="savePresetButton">
+        <property name="text">
+         <string>Save Preset</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2" colspan="2">
+       <widget class="QPushButton" name="loadPresetButton">
+        <property name="text">
+         <string>Load Preset</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="2">
+       <widget class="QPushButton" name="exportPresetButton">
+        <property name="text">
+         <string>Export Preset...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2" colspan="2">
+       <widget class="QPushButton" name="importPresetButton">
+        <property name="text">
+         <string>Import Preset...</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
