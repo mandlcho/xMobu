@@ -235,13 +235,7 @@ class ConstraintManagerDialog(QDialog):
 
     def on_file_event(self, pCaller, pEvent):
         """Callback for file operations (new/open/merge)"""
-        # Safety check: Don't execute if dialog is closing or widgets deleted
         if self._is_closing:
-            return  # Silently skip when closing (expected behavior)
-
-        if not self._is_widget_valid():
-            if not self._is_closing:
-                print("[Constraint Manager Qt] File event callback skipped - widgets invalid")
             return
 
         print(f"[Constraint Manager Qt] File event detected, refreshing scene list")
@@ -255,7 +249,6 @@ class ConstraintManagerDialog(QDialog):
         """Callback for scene changes (object add/delete)"""
         from pyfbsdk import FBSceneChangeType
 
-        # Safety check: Don't execute if dialog is closing or widgets deleted
         if self._is_closing:
             return
 
@@ -272,48 +265,12 @@ class ConstraintManagerDialog(QDialog):
         if pEvent.Type not in relevant_events:
             return
 
-        if not self._is_widget_valid():
-            if not self._is_closing:
-                print("[Constraint Manager Qt] Scene change callback skipped - widgets invalid")
-            return
-
-        print(f"[Constraint Manager Qt] Relevant scene change detected, refreshing list")
+        print(f"[Constraint Manager Qt] Scene change detected, refreshing list")
         self.update_list_widget()
 
         # Clean up selected_objects list - remove any deleted objects
         self.selected_objects = [obj for obj in self.selected_objects
                                 if obj in self.all_scene_objects]
-
-    def _is_widget_valid(self):
-        """Check if widgets still exist and are valid"""
-        try:
-            if not hasattr(self, 'selectionList'):
-                if not self._is_closing:
-                    print("[Constraint Manager Qt] Widget validation: selectionList attribute missing")
-                return False
-
-            if self.selectionList is None:
-                if not self._is_closing:
-                    print("[Constraint Manager Qt] Widget validation: selectionList is None")
-                return False
-
-            # Try to access the widget to see if it's still valid
-            try:
-                count = self.selectionList.count()
-                # Only log success when NOT closing (reduces noise)
-                if not self._is_closing:
-                    print(f"[Constraint Manager Qt] Widget validation: SUCCESS (count={count})")
-                return True
-            except RuntimeError as e:
-                if not self._is_closing:
-                    print(f"[Constraint Manager Qt] Widget validation: RuntimeError - {e}")
-                return False
-
-        except Exception as e:
-            # Widget has been deleted
-            if not self._is_closing:
-                print(f"[Constraint Manager Qt] Widget validation: Exception - {e}")
-            return False
 
     def update_list_widget(self):
         """
