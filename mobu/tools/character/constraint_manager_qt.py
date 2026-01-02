@@ -20,10 +20,10 @@ except ImportError:
         QtWidgets = None
 
 from pyfbsdk import (
-    FBMessageBox, FBSystem, FBConstraintManager, FBApplication
+    FBMessageBox, FBSystem, FBConstraintManager
 )
 from core.logger import logger
-from mobu.utils import get_all_models, SceneEventManager
+from mobu.utils import get_all_models, SceneEventManager, refresh_list_widget
 
 TOOL_NAME = "Constraint Manager"
 
@@ -268,57 +268,30 @@ class ConstraintManagerDialog(QDialog):
         print(f"[Constraint Manager Qt] Scene change detected, refreshing list")
         self.update_list_widget()
 
-        # Clean up selected_objects list - remove any deleted objects
-        self.selected_objects = [obj for obj in self.selected_objects
-                                if obj in self.all_scene_objects]
-
     def update_list_widget(self):
-        """
-        Dedicated function to update the list widget with current scene objects.
-        Handles clearing, repopulating, and forcing UI refresh.
-        """
+        """Update the selection list with current scene objects"""
         print("[Constraint Manager Qt] update_list_widget() called")
 
-        # DEBUG: Re-find the widget each time to ensure we have a valid reference
-        selection_list = self.findChild(QtWidgets.QListWidget, "selectionList")
+        # Get all models from the scene
+        self.all_scene_objects = get_all_models()
 
-        if not selection_list:
-            print("[Constraint Manager Qt] FATAL: Could not find 'selectionList' in UI on refresh.")
-            return
+        # Sort by name for easier finding
+        self.all_scene_objects.sort(key=lambda x: x.Name)
 
-        try:
-            # Clear the list
-            selection_list.clear()
+        # Use utility function to refresh the list widget
+        success = refresh_list_widget(
+            parent_widget=self,
+            list_widget_name="selectionList",
+            models=self.all_scene_objects,
+            selected_objects=self.selected_objects,
+            tool_name="Constraint Manager Qt"
+        )
 
-            # Get all models from the scene
-            self.all_scene_objects = get_all_models()
-
-            # Sort by name for easier finding
-            self.all_scene_objects.sort(key=lambda x: x.Name)
-
-            # Populate the list widget
-            for model in self.all_scene_objects:
-                selection_list.addItem(model.Name)
-
+        if success:
             print(f"[Constraint Manager Qt] List updated with {len(self.all_scene_objects)} objects")
-
-            # Force Qt widget updates
-            selection_list.update()
-            selection_list.repaint()
-
-            # Force MotionBuilder UI update
-            FBApplication().UpdateAllWidgets()
-
             print(f"[Constraint Manager Qt] UI refresh complete")
-
-        except RuntimeError as e:
-            print(f"[Constraint Manager Qt] RuntimeError during update: {e}")
-            return
-        except Exception as e:
-            print(f"[Constraint Manager Qt] ERROR in update_list_widget: {e}")
-            import traceback
-            traceback.print_exc()
-            return
+        else:
+            print("[Constraint Manager Qt] Failed to refresh list widget")
 
     def on_refresh_clicked(self):
         """Handle refresh button click"""

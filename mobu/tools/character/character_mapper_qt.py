@@ -23,10 +23,10 @@ except ImportError:
         QtWidgets = None
 
 from pyfbsdk import (
-    FBMessageBox, FBSystem, FBCharacter, FBBodyNodeId, FBVector3d, FBCamera, FBApplication
+    FBMessageBox, FBSystem, FBCharacter, FBBodyNodeId, FBVector3d, FBCamera
 )
 from core.logger import logger
-from mobu.utils import get_all_models, get_children, SceneEventManager
+from mobu.utils import get_all_models, get_children, SceneEventManager, refresh_list_widget
 
 TOOL_NAME = "Character Mapper"
 
@@ -418,59 +418,32 @@ class CharacterMapperDialog(QDialog):
         self.update_scene_objects()
 
     def update_scene_objects(self):
-        """
-        Dedicated function to update the list widget with current scene objects.
-        Handles clearing, repopulating, and forcing UI refresh.
-        """
+        """Update the objects list with current scene objects, filtering cameras"""
         print("[Character Mapper Qt] update_scene_objects() called")
 
-        # DEBUG: Re-find the widget each time to ensure we have a valid reference
-        objects_list = self.findChild(QtWidgets.QListWidget, "objectsList")
+        # Get all models from scene
+        all_models = get_all_models()
 
-        if not objects_list:
-            print("[Character Mapper Qt] FATAL: Could not find 'objectsList' in UI on refresh.")
-            return
+        # Filter out cameras
+        self.all_models = [model for model in all_models if not isinstance(model, FBCamera)]
 
-        try:
-            # Clear the list
-            objects_list.clear()
+        # Sort by name for easier finding
+        self.all_models.sort(key=lambda x: x.Name)
 
-            # Get all models from scene
-            all_models = get_all_models()
+        # Use utility function to refresh the list widget
+        success = refresh_list_widget(
+            parent_widget=self,
+            list_widget_name="objectsList",
+            models=self.all_models,
+            selected_objects=self.selected_objects,
+            tool_name="Character Mapper Qt"
+        )
 
-            # Filter out cameras
-            self.all_models = [model for model in all_models if not isinstance(model, FBCamera)]
-
-            # Sort by name for easier finding
-            self.all_models.sort(key=lambda x: x.Name)
-
-            # Populate the list widget
-            for model in self.all_models:
-                objects_list.addItem(model.Name)
-
+        if success:
             print(f"[Character Mapper Qt] List updated with {len(self.all_models)} objects (cameras filtered)")
-
-            # Force Qt widget updates
-            objects_list.update()
-            objects_list.repaint()
-
-            # Force MotionBuilder UI update
-            FBApplication().UpdateAllWidgets()
-
             print(f"[Character Mapper Qt] UI refresh complete")
-
-            # Clean up selected_objects list - remove any deleted objects
-            self.selected_objects = [obj for obj in self.selected_objects
-                                    if obj in self.all_models]
-
-        except RuntimeError as e:
-            print(f"[Character Mapper Qt] RuntimeError during update: {e}")
-            return
-        except Exception as e:
-            print(f"[Character Mapper Qt] ERROR in update_scene_objects: {e}")
-            import traceback
-            traceback.print_exc()
-            return
+        else:
+            print("[Character Mapper Qt] Failed to refresh list widget")
 
     def apply_filter(self):
         """Apply search filter to objects list"""

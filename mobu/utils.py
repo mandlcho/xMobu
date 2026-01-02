@@ -574,3 +574,113 @@ def register_scene_callback(callback: Callable) -> SceneEventManager:
     manager = SceneEventManager()
     manager.register_scene_changes(callback)
     return manager
+
+
+# =============================================================================
+# Qt Widget Utilities
+# =============================================================================
+
+def refresh_list_widget(
+    parent_widget,
+    list_widget_name: str,
+    models: List[FBModel],
+    selected_objects: Optional[List[FBModel]] = None,
+    tool_name: str = "Tool"
+):
+    """
+    Refresh a Qt list widget with MotionBuilder models.
+
+    This is the standard pattern for updating scene object lists in Qt dialogs.
+    Re-finds the widget, clears it, populates with model names, and forces UI updates.
+
+    Args:
+        parent_widget: Qt dialog/widget containing the list widget (usually self)
+        list_widget_name: Object name of the QListWidget to refresh
+        models: List of FBModel objects to display
+        selected_objects: Optional list to clean up (removes deleted models)
+        tool_name: Name of the tool (for logging)
+
+    Returns:
+        bool: True if refresh succeeded, False if widget not found
+
+    Example:
+        >>> # In your Qt dialog class:
+        >>> def update_scene_objects(self):
+        ...     all_models = get_all_models()
+        ...     # Filter cameras
+        ...     from pyfbsdk import FBCamera
+        ...     models = [m for m in all_models if not isinstance(m, FBCamera)]
+        ...     models.sort(key=lambda x: x.Name)
+        ...
+        ...     refresh_list_widget(
+        ...         parent_widget=self,
+        ...         list_widget_name="objectsList",
+        ...         models=models,
+        ...         selected_objects=self.selected_objects,
+        ...         tool_name="My Tool"
+        ...     )
+
+    Notes:
+        - Re-finds the widget each time for reliability (handles widget lifecycle)
+        - Clears and repopulates the entire list
+        - Forces Qt widget updates (update, repaint)
+        - Forces MotionBuilder UI update (UpdateAllWidgets)
+        - Cleans up selected_objects list if provided
+        - Returns False if widget can't be found (safe to ignore)
+    """
+    try:
+        # Import Qt here to avoid requiring it at module level
+        try:
+            from PySide2 import QtWidgets
+        except ImportError:
+            from PySide import QtGui as QtWidgets
+    except ImportError:
+        logger.error(f"[{tool_name}] Qt not available for refresh_list_widget")
+        return False
+
+    # Re-find the widget each time to ensure we have a valid reference
+    list_widget = parent_widget.findChild(QtWidgets.QListWidget, list_widget_name)
+
+    if not list_widget:
+        logger.warning(f"[{tool_name}] Could not find list widget '{list_widget_name}'")
+        return False
+
+    try:
+        # Clear the list
+        list_widget.clear()
+
+        # Populate the list widget
+        for model in models:
+            list_widget.addItem(model.Name)
+
+        logger.debug(f"[{tool_name}] List updated with {len(models)} objects")
+
+        # Force Qt widget updates
+        list_widget.update()
+        list_widget.repaint()
+
+        # Force MotionBuilder UI update
+        FBApplication().UpdateAllWidgets()
+
+        # Clean up selected_objects list if provided - remove any deleted objects
+        if selected_objects is not None:
+            # Remove objects that are no longer in the models list
+            removed = []
+            for i in range(len(selected_objects) - 1, -1, -1):
+                if selected_objects[i] not in models:
+                    removed.append(selected_objects[i])
+                    del selected_objects[i]
+
+            if removed:
+                logger.debug(f"[{tool_name}] Cleaned up {len(removed)} deleted objects from selection")
+
+        return True
+
+    except RuntimeError as e:
+        logger.error(f"[{tool_name}] RuntimeError during list refresh: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"[{tool_name}] Error refreshing list widget: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
