@@ -117,7 +117,7 @@ if "%MOBU_FOUND%"=="0" (
 
 echo [STEP 4/5] Selecting MotionBuilder version(s) to configure...
 echo.
-echo Found MotionBuilder installations. Choose a version to configure:
+echo Found MotionBuilder installations:
 echo.
 
 REM List available versions
@@ -128,44 +128,19 @@ for %%v in (%MOBU_VERSIONS%) do (
     set "VERSION_!count!=%%v"
 )
 
-echo [A] Install for ALL detected versions
-echo [Q] Quit
 echo.
-
-set /p "choice=Enter your choice: "
-echo [INPUT] User selected: %choice%
+echo [AUTO-INSTALL] Installing for ALL detected versions...
+echo [INFO] To manually select versions, edit install.bat
 echo.
-
-if /i "%choice%"=="Q" (
-    echo [INFO] Installation cancelled by user.
-    echo.
-    pause
-    exit /b 0
-)
 
 echo [STEP 5/5] Installing xMobu...
 echo.
 
-if /i "%choice%"=="A" (
-    echo [INFO] Installing for ALL MotionBuilder versions...
-    for %%v in (%MOBU_VERSIONS%) do (
-        call :InstallForVersion %%v
-    )
-    goto :Done
+REM Automatically install for all versions
+for %%v in (%MOBU_VERSIONS%) do (
+    call :InstallForVersion %%v
 )
-
-REM Install for specific version
-if defined VERSION_%choice% (
-    call set "SELECTED_VERSION=%%VERSION_%choice%%%"
-    echo [INFO] Installing for MotionBuilder !SELECTED_VERSION!...
-    call :InstallForVersion !SELECTED_VERSION!
-    goto :Done
-) else (
-    echo [ERROR] Invalid choice: %choice%
-    echo.
-    pause
-    exit /b 1
-)
+goto :Done
 
 :InstallForVersion
 set "VERSION=%~1"
