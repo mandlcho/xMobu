@@ -712,7 +712,10 @@ class CharacterMapperDialog(QDialog):
 
     def on_save_preset(self):
         """Save current mapping as a preset"""
-        preset_name = self.presetNameEdit.text() or "Character"
+        try:
+            preset_name = self.presetNameEdit.text() if self.presetNameEdit else "Character"
+        except RuntimeError:
+            preset_name = "Character"
 
         # Build preset data
         preset_data = {
@@ -745,7 +748,11 @@ class CharacterMapperDialog(QDialog):
 
     def on_load_preset(self):
         """Load a preset"""
-        preset_name = self.presetNameEdit.text() or "Character"
+        try:
+            preset_name = self.presetNameEdit.text() if self.presetNameEdit else "Character"
+        except RuntimeError:
+            preset_name = "Character"
+
         preset_file = self.preset_path / f"{preset_name}.json"
 
         if not preset_file.exists():
@@ -797,7 +804,11 @@ class CharacterMapperDialog(QDialog):
 
     def on_export_preset(self):
         """Export preset to external file"""
-        preset_name = self.presetNameEdit.text() or "Character"
+        try:
+            preset_name = self.presetNameEdit.text() if self.presetNameEdit else "Character"
+        except RuntimeError:
+            preset_name = "Character"
+
         preset_file = self.preset_path / f"{preset_name}.json"
 
         if not preset_file.exists():
@@ -858,7 +869,13 @@ class CharacterMapperDialog(QDialog):
                     print(f"[Character Mapper Qt] File already in presets directory, skipping copy")
 
                 # Update preset name field
-                self.presetNameEdit.setText(preset_name)
+                try:
+                    if self.presetNameEdit:
+                        self.presetNameEdit.setText(preset_name)
+                except RuntimeError:
+                    # Widget was deleted
+                    print(f"[Character Mapper Qt] Warning: preset name field no longer accessible")
+                    pass
 
                 # Load the preset
                 self.on_clear_mapping()
