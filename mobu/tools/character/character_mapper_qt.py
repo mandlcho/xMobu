@@ -749,10 +749,19 @@ class CharacterMapperDialog(QDialog):
     def on_load_preset(self):
         """Load a preset"""
         try:
-            preset_name = self.presetNameEdit.text() if self.presetNameEdit else "Character"
-        except RuntimeError:
+            if hasattr(self, 'presetNameEdit') and self.presetNameEdit is not None:
+                preset_name = self.presetNameEdit.text()
+                if not preset_name:
+                    preset_name = "Character"
+                print(f"[Character Mapper Qt] Load preset: got name '{preset_name}' from field")
+            else:
+                preset_name = "Character"
+                print(f"[Character Mapper Qt] Load preset: presetNameEdit not available, using default")
+        except RuntimeError as e:
             preset_name = "Character"
+            print(f"[Character Mapper Qt] Load preset: RuntimeError accessing field: {e}")
 
+        print(f"[Character Mapper Qt] Loading preset: {preset_name}")
         preset_file = self.preset_path / f"{preset_name}.json"
 
         if not preset_file.exists():
