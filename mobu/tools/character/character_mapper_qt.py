@@ -639,14 +639,34 @@ class CharacterMapperDialog(QDialog):
             else:
                 print(f"[Character Mapper Qt] Skipping {slot_name} (not mapped)")
 
+    def check_tpose_vs_apose(self):
+        """Check if arms are in T-pose or A-pose by checking shoulder rotation"""
+        left_arm = self.bone_mappings.get("LeftArm")
+        right_arm = self.bone_mappings.get("RightArm")
+
+        if not left_arm or not right_arm:
+            return True, "Cannot check pose - arm bones not mapped"
+
+        # Get arm rotations (Y rotation indicates T-pose vs A-pose)
+        # T-pose: arms roughly horizontal (Y rotation close to 0)
+        # A-pose: arms angled down (Y rotation > 30 degrees typically)
+        left_rot_y = abs(left_arm.Rotation[1])
+        right_rot_y = abs(right_arm.Rotation[1])
+
+        # Threshold: if Y rotation > 20 degrees, likely A-pose
+        threshold = 20.0
+
+        if left_rot_y > threshold or right_rot_y > threshold:
+            return False, f"Arms appear to be in A-pose (LeftArm Y:{left_rot_y:.1f}°, RightArm Y:{right_rot_y:.1f}°)"
+
+        return True, "Arms appear to be in T-pose"
+
     def on_create_character(self):
-        """Create character from current mapping"""
+        """Create character from current mapping - follows MotionBuilder workflow"""
         print("[Character Mapper Qt] Creating character...")
 
         try:
-            # Check required bones (minimum for MotionBuilder characterization)
-            # Note: Only ONE Spine bone is required (not Spine1, Spine2, etc.)
-            # Additional spine bones are optional for more detailed spine control
+            # Step 1: Check required bones
             required = ["Hips", "LeftUpLeg", "RightUpLeg", "Spine"]
             missing = [slot for slot in required if not self.bone_mappings.get(slot)]
 
@@ -659,25 +679,63 @@ class CharacterMapperDialog(QDialog):
                 )
                 return
 
-            # Apply T-pose if checkbox is enabled
-            try:
-                if self.forceTposeCheckbox and self.forceTposeCheckbox.isChecked():
-                    print("[Character Mapper Qt] Force T-pose enabled, applying T-pose...")
-                    self.apply_tpose()
-            except RuntimeError:
-                # Checkbox widget was deleted - skip T-pose application
-                print("[Character Mapper Qt] Warning: Force T-pose checkbox no longer accessible, skipping T-pose")
-                pass
+            # Step 2: Check T-pose vs A-pose
+            is_tpose, pose_msg = self.check_tpose_vs_apose()
+            print(f"[Character Mapper Qt] Pose check: {pose_msg}")
 
-            # Create character
+            if not is_tpose:
+                reply = QMessageBox.warning(
+                    self,
+                    "A-Pose Detected",
+                    f"{pose_msg}\n\nCharacterization requires T-pose (arms horizontal).\n\n"
+                    f"Options:\n"
+                    f"• Yes - Apply automatic T-pose\n"
+                    f"• No - Continue anyway (may fail)\n"
+                    f"• Cancel - Go back and manually adjust",
+                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
+                )
+
+                if reply == QMessageBox.Cancel:
+                    return
+                elif reply == QMessageBox.Yes:
+                    print("[Character Mapper Qt] Applying T-pose...")
+                    self.apply_tpose()
+
+            # Step 3: Ask for character type (Biped/Quadruped)
+            char_type_msg = QMessageBox.question(
+                self,
+                "Character Type",
+                "Is this a Biped character?\n\n"
+                "• Yes - Biped (human, humanoid)\n"
+                "• No - Quadruped (animal with 4 legs)",
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            is_biped = (char_type_msg == QMessageBox.Yes)
+
+            # Step 4: Ask for IK/FK setup
+            ik_fk_reply = QMessageBox.question(
+                self,
+                "Control Rig Setup",
+                "Create Control Rig with IK/FK?\n\n"
+                "• Yes - Full IK/FK rig (recommended for animation)\n"
+                "• No - FK only (lighter, for retargeting)",
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            create_ik_fk = (ik_fk_reply == QMessageBox.Yes)
+
+            # Step 5: Get character name
             try:
                 char_name = self.presetNameEdit.text() if self.presetNameEdit else "Character"
             except RuntimeError:
                 char_name = "Character"
 
+            # Step 6: Create character and map bones
+            print(f"[Character Mapper Qt] Creating character: {char_name} (Biped: {is_biped}, IK/FK: {create_ik_fk})")
             self.character = FBCharacter(char_name)
 
-            # Map bones
+            # Map bones to character
             for slot_name, _ in CHARACTER_SLOTS:
                 model = self.bone_mappings.get(slot_name)
                 if model:
@@ -689,20 +747,43 @@ class CharacterMapperDialog(QDialog):
                     else:
                         print(f"[Character Mapper Qt WARNING] Could not find property {slot_name}Link")
 
-            # Characterize
-            self.character.SetCharacterizeOn(True)
+            # Step 7: Characterize (with biped/quadruped flag)
+            print(f"[Character Mapper Qt] Characterizing as {'Biped' if is_biped else 'Quadruped'}...")
+            self.character.SetCharacterizeOn(is_biped)
 
             if self.character.GetCharacterizeError():
-                error_msg = "Characterization failed. Check bone positions and hierarchy."
-                QMessageBox.critical(self, "Characterization Error", error_msg)
-                print(f"[Character Mapper Qt ERROR] {error_msg}")
-            else:
-                QMessageBox.information(
+                error_msg = self.character.GetCharacterizeError()
+                QMessageBox.critical(
                     self,
-                    "Success",
-                    f"Character '{self.character.Name}' created successfully!"
+                    "Characterization Failed",
+                    f"Characterization failed:\n{error_msg}\n\n"
+                    f"Check:\n"
+                    f"• Bone hierarchy (parent-child relationships)\n"
+                    f"• Bone positions (joints should be at correct locations)\n"
+                    f"• T-pose (arms horizontal, not angled down)"
                 )
-                print(f"[Character Mapper Qt] Character created: {self.character.Name}")
+                print(f"[Character Mapper Qt ERROR] {error_msg}")
+                return
+
+            print("[Character Mapper Qt] Characterization successful!")
+
+            # Step 8: Create Control Rig if requested
+            if create_ik_fk:
+                print("[Character Mapper Qt] Creating IK/FK Control Rig...")
+                if self.character.CreateControlRig(True):  # True = IK/FK, False = FK only
+                    print("[Character Mapper Qt] Control Rig created successfully!")
+                else:
+                    print("[Character Mapper Qt] Warning: Control Rig creation failed")
+
+            # Success!
+            QMessageBox.information(
+                self,
+                "Success",
+                f"Character '{self.character.Name}' created successfully!\n\n"
+                f"Type: {'Biped' if is_biped else 'Quadruped'}\n"
+                f"Control Rig: {'IK/FK' if create_ik_fk else 'FK Only'}"
+            )
+            print(f"[Character Mapper Qt] Character creation complete: {self.character.Name}")
 
         except Exception as e:
             logger.error(f"Characterization failed: {str(e)}")
