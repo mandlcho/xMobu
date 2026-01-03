@@ -748,18 +748,28 @@ class CharacterMapperDialog(QDialog):
 
     def on_load_preset(self):
         """Load a preset"""
+        preset_name = "Character"
+
+        # Try to get the preset name from the text field
         try:
-            if hasattr(self, 'presetNameEdit') and self.presetNameEdit is not None:
-                preset_name = self.presetNameEdit.text()
-                if not preset_name:
-                    preset_name = "Character"
-                print(f"[Character Mapper Qt] Load preset: got name '{preset_name}' from field")
+            # Re-find the widget if needed
+            if not hasattr(self, 'presetNameEdit') or self.presetNameEdit is None:
+                self.presetNameEdit = self.findChild(QtWidgets.QLineEdit, "presetNameEdit")
+                print(f"[Character Mapper Qt] Re-finding presetNameEdit widget")
+
+            if self.presetNameEdit:
+                text = self.presetNameEdit.text()
+                if text:
+                    preset_name = text
+                    print(f"[Character Mapper Qt] Load preset: got name '{preset_name}' from field")
+                else:
+                    print(f"[Character Mapper Qt] Load preset: field is empty, using default")
             else:
-                preset_name = "Character"
-                print(f"[Character Mapper Qt] Load preset: presetNameEdit not available, using default")
+                print(f"[Character Mapper Qt] Load preset: presetNameEdit widget not found")
         except RuntimeError as e:
-            preset_name = "Character"
             print(f"[Character Mapper Qt] Load preset: RuntimeError accessing field: {e}")
+        except Exception as e:
+            print(f"[Character Mapper Qt] Load preset: Unexpected error: {e}")
 
         print(f"[Character Mapper Qt] Loading preset: {preset_name}")
         preset_file = self.preset_path / f"{preset_name}.json"
@@ -805,10 +815,17 @@ class CharacterMapperDialog(QDialog):
             logger.error(f"Failed to load preset: {str(e)}")
 
     def _find_model_by_name(self, name):
-        """Find a model by its LongName"""
+        """Find a model by its LongName or Name"""
+        # First try exact LongName match (for full paths)
         for model in self.all_models:
             if model.LongName == name:
                 return model
+
+        # Then try Name match (for simple names)
+        for model in self.all_models:
+            if model.Name == name:
+                return model
+
         return None
 
     def on_export_preset(self):
