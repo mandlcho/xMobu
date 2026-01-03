@@ -837,14 +837,26 @@ class CharacterMapperDialog(QDialog):
                 model = self.bone_mappings[slot]
                 print(f"  - {slot}: {model.Name if model else 'None'}")
 
-            self.character = FBCharacter(char_name)
+            print(f"[Character Mapper Qt] Creating FBCharacter object...")
+            try:
+                self.character = FBCharacter(char_name)
+                print(f"[Character Mapper Qt] FBCharacter created successfully: {self.character.Name}")
+            except Exception as e:
+                print(f"[Character Mapper Qt] ERROR creating FBCharacter: {e}")
+                raise
 
             # Debug: List available Link properties
-            print(f"[Character Mapper Qt] Available Link properties on FBCharacter:")
-            prop_list = self.character.PropertyList
-            for prop in prop_list:
-                if "Link" in prop.Name:
-                    print(f"  - {prop.Name}")
+            print(f"[Character Mapper Qt] Listing available Link properties on FBCharacter...")
+            try:
+                prop_list = self.character.PropertyList
+                link_count = 0
+                for prop in prop_list:
+                    if "Link" in prop.Name:
+                        print(f"  - {prop.Name}")
+                        link_count += 1
+                print(f"[Character Mapper Qt] Found {link_count} Link properties")
+            except Exception as e:
+                print(f"[Character Mapper Qt] ERROR listing properties: {e}")
 
             # Ensure characterization is off before mapping
             self.character.SetCharacterizeOn(False)
