@@ -612,32 +612,86 @@ class CharacterMapperDialog(QDialog):
         print("[Character Mapper Qt] Cleared all mappings")
 
     def apply_tpose(self):
-        """Apply T-pose rotations to arm bones"""
-        print("[Character Mapper Qt] Applying T-pose to arm bones...")
+        """Apply T-pose by calculating proper arm rotations based on skeleton structure"""
+        print("[Character Mapper Qt] Applying intelligent T-pose to arm bones...")
 
-        # Define T-pose rotations for arm bones (in degrees)
-        # These values assume a standard rig orientation
-        tpose_rotations = {
-            "LeftShoulder": FBVector3d(0, 0, 0),
-            "LeftArm": FBVector3d(0, 0, 90),
-            "LeftForeArm": FBVector3d(0, 0, 0),
-            "RightShoulder": FBVector3d(0, 0, 0),
-            "RightArm": FBVector3d(0, 0, -90),
-            "RightForeArm": FBVector3d(0, 0, 0),
-        }
+        # Process left and right arms
+        for side in ["Left", "Right"]:
+            shoulder = self.bone_mappings.get(f"{side}Shoulder")
+            arm = self.bone_mappings.get(f"{side}Arm")
+            forearm = self.bone_mappings.get(f"{side}ForeArm")
 
-        # Apply rotations to mapped arm bones
-        for slot_name, rotation in tpose_rotations.items():
-            model = self.bone_mappings.get(slot_name)
-            if model:
-                # Store original rotation for potential undo
-                original_rotation = model.Rotation
+            if not arm or not forearm:
+                print(f"[Character Mapper Qt] Skipping {side} arm - bones not mapped")
+                continue
 
-                # Apply T-pose rotation
-                model.Rotation = rotation
-                print(f"[Character Mapper Qt] Set {slot_name} ({model.Name}) rotation to {rotation}")
-            else:
-                print(f"[Character Mapper Qt] Skipping {slot_name} (not mapped)")
+            # Get world positions
+            arm_pos = arm.Translation
+            forearm_pos = forearm.Translation
+
+            # Calculate the vector from shoulder/arm to forearm (arm direction)
+            arm_vec = FBVector3d(
+                forearm_pos[0] - arm_pos[0],
+                forearm_pos[1] - arm_pos[1],
+                forearm_pos[2] - arm_pos[2]
+            )
+
+            # Normalize the vector
+            length = (arm_vec[0]**2 + arm_vec[1]**2 + arm_vec[2]**2)**0.5
+            if length > 0.001:
+                arm_vec = FBVector3d(
+                    arm_vec[0] / length,
+                    arm_vec[1] / length,
+                    arm_vec[2] / length
+                )
+
+            # Calculate the angle needed to make arm horizontal (parallel to ground)
+            # We want the arm to point along +X (right) or -X (left) axis
+            # Current Y component tells us how much it's angled up/down
+
+            # Target: Y component should be ~0 (horizontal)
+            # We'll rotate around Z axis to achieve this
+
+            current_y = arm_vec[1]
+            current_x = arm_vec[0]
+
+            # Calculate angle from horizontal
+            # atan2(y, x) gives us the angle in the XY plane
+            import math
+            current_angle = math.atan2(current_y, abs(current_x)) * (180.0 / math.pi)
+
+            # For T-pose, we want arms horizontal (0 degrees from horizontal)
+            # So we need to rotate by negative of current angle
+            correction_angle = -current_angle
+
+            print(f"[Character Mapper Qt] {side} arm current angle from horizontal: {current_angle:.1f}°")
+            print(f"[Character Mapper Qt] {side} arm applying correction: {correction_angle:.1f}° on Z-axis")
+
+            # Get current rotation
+            current_rot = arm.Rotation
+
+            # Apply correction on Z-axis for T-pose
+            # For left arm: positive Z rotation lifts arm
+            # For right arm: negative Z rotation lifts arm
+            sign = 1 if side == "Left" else -1
+            new_rotation = FBVector3d(
+                current_rot[0],  # X - keep current
+                current_rot[1],  # Y - keep current
+                current_rot[2] + (correction_angle * sign)  # Z - apply correction
+            )
+
+            arm.Rotation = new_rotation
+            print(f"[Character Mapper Qt] {side}Arm ({arm.Name}) rotation: {current_rot} -> {new_rotation}")
+
+            # Straighten forearm (remove bend)
+            if forearm:
+                forearm.Rotation = FBVector3d(0, 0, 0)
+                print(f"[Character Mapper Qt] {side}ForeArm ({forearm.Name}) straightened")
+
+            # Zero shoulder rotation if present
+            if shoulder:
+                shoulder.Rotation = FBVector3d(0, 0, 0)
+                print(f"[Character Mapper Qt] {side}Shoulder ({shoulder.Name}) zeroed")
 
     def check_tpose_vs_apose(self):
         """Check if arms are in T-pose or A-pose by checking shoulder rotation"""
