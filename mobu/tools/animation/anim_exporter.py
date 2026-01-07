@@ -29,7 +29,7 @@ except ImportError:
         QtWidgets = None
 
 from pyfbsdk import (
-    FBMessageBox, FBSystem, FBNote, FBPlayerControl, FBPropertyString
+    FBMessageBox, FBSystem, FBNote, FBPlayerControl, FBPropertyString, FBPropertyType
 )
 from core.logger import logger
 
@@ -207,7 +207,6 @@ class AnimExporterDialog(QDialog):
             print("[Anim Exporter] WARNING: No parent found, creating as standalone window")
 
         self.note_object = None
-        self.data_property = None
         self._is_closing = False
 
         # Setup UI
@@ -311,74 +310,95 @@ class AnimExporterDialog(QDialog):
 
     def _setup_custom_property(self):
         """Setup custom property on the note for storing animation data"""
-        try:
-            # Check if property already exists
-            prop = self.note_object.PropertyList.Find("AnimNoteData")
-
-            if not prop:
-                # Create new custom property
-                prop = self.note_object.PropertyCreate("AnimNoteData", FBPropertyString, "String", True, True)
-                print("[Anim Exporter] Created custom property: AnimNoteData")
-            else:
-                print("[Anim Exporter] Found existing custom property: AnimNoteData")
-
-            self.data_property = prop
-
-        except Exception as e:
-            print(f"[Anim Exporter] Error creating custom property: {str(e)}")
-            logger.error(f"Failed to create custom property: {str(e)}")
+        # No longer needed - we'll create individual properties dynamically
+        print("[Anim Exporter] Custom properties will be created per animation entry")
+        pass
 
     def load_data_from_note(self):
-        """Load animation data from the note's custom property"""
-        if not self.data_property:
-            print("[Anim Exporter] No data property available")
+        """Load animation data from individual custom properties (Anim00, Anim01, etc.)"""
+        if not self.note_object:
+            print("[Anim Exporter] No note object available")
             return
 
         try:
-            # Get the data from the property
-            data_str = self.data_property.Data
+            # Find all animation properties (Anim00, Anim01, etc.)
+            animation_props = []
+            prop_list = self.note_object.PropertyList
 
-            if not data_str:
-                print("[Anim Exporter] No data found in note property")
+            # Scan for Anim00, Anim01, Anim02... properties
+            index = 0
+            while True:
+                prop_name = f"Anim{index:02d}"
+                prop = prop_list.Find(prop_name)
+
+                if not prop:
+                    # No more animation properties found
+                    break
+
+                animation_props.append((prop_name, prop))
+                index += 1
+
+            if not animation_props:
+                print("[Anim Exporter] No animation data found in note")
                 return
 
-            # Parse JSON data
-            animation_list = json.loads(data_str)
-            print(f"[Anim Exporter] Loaded {len(animation_list)} animation(s) from note")
+            print(f"[Anim Exporter] Found {len(animation_props)} animation(s) in note")
 
             # Populate table (disable change tracking temporarily)
             self.animation_table.itemChanged.disconnect(self.on_table_data_changed)
 
-            for anim_data in animation_list:
-                self._add_row_to_table(
-                    anim_data.get('name', ''),
-                    anim_data.get('start_frame', 0),
-                    anim_data.get('end_frame', 100),
-                    anim_data.get('namespace', ''),
-                    anim_data.get('path', '')
-                )
+            for prop_name, prop in animation_props:
+                try:
+                    # Parse JSON data from property
+                    data_str = prop.Data
+                    if data_str:
+                        anim_data = json.loads(data_str)
+                        self._add_row_to_table(
+                            anim_data.get('name', ''),
+                            anim_data.get('start_frame', 0),
+                            anim_data.get('end_frame', 100),
+                            anim_data.get('namespace', ''),
+                            anim_data.get('path', '')
+                        )
+                except json.JSONDecodeError as e:
+                    print(f"[Anim Exporter] Error parsing {prop_name}: {str(e)}")
+                except Exception as e:
+                    print(f"[Anim Exporter] Error loading {prop_name}: {str(e)}")
 
             # Re-enable change tracking
             self.animation_table.itemChanged.connect(self.on_table_data_changed)
 
-        except json.JSONDecodeError as e:
-            print(f"[Anim Exporter] Error parsing JSON data: {str(e)}")
-            logger.error(f"Failed to parse animation data: {str(e)}")
         except Exception as e:
-            print(f"[Anim Exporter] Error loading data: {str(e)}")
+            print(f"[Anim Exporter] Error loading data from note: {str(e)}")
             logger.error(f"Failed to load data from note: {str(e)}")
 
     def save_data_to_note(self):
-        """Save animation data to the note's custom property"""
-        if not self.data_property:
-            print("[Anim Exporter] No data property available")
+        """Save animation data to individual custom properties (Anim00, Anim01, etc.)"""
+        if not self.note_object:
+            print("[Anim Exporter] No note object available")
             return
 
         try:
-            # Collect all animation data from table
-            animation_list = []
+            prop_list = self.note_object.PropertyList
 
-            for row in range(self.animation_table.rowCount()):
+            # First, remove all existing Anim## properties to clean up
+            index = 0
+            while True:
+                prop_name = f"Anim{index:02d}"
+                prop = prop_list.Find(prop_name)
+                if not prop:
+                    break
+                # Note: MotionBuilder doesn't support removing properties easily
+                # So we'll just overwrite them
+                index += 1
+
+            # Now create/update properties for current table data
+            row_count = self.animation_table.rowCount()
+
+            for row in range(row_count):
+                prop_name = f"Anim{row:02d}"
+
+                # Collect animation data for this row
                 anim_data = {
                     'name': self.animation_table.item(row, 1).text(),
                     'start_frame': int(self.animation_table.item(row, 2).text()),
@@ -386,22 +406,123 @@ class AnimExporterDialog(QDialog):
                     'namespace': self.animation_table.item(row, 4).text(),
                     'path': self.animation_table.item(row, 5).text()
                 }
-                animation_list.append(anim_data)
 
-            # Convert to JSON and save
-            data_str = json.dumps(animation_list, indent=2)
-            self.data_property.Data = data_str
+                # Convert to JSON string
+                data_str = json.dumps(anim_data)
 
-            print(f"[Anim Exporter] Saved {len(animation_list)} animation(s) to note")
+                # Find or create the property
+                prop = prop_list.Find(prop_name)
+                if not prop:
+                    prop = self.note_object.PropertyCreate(prop_name, FBPropertyString, "String", True, True)
+                    print(f"[Anim Exporter] Created property: {prop_name}")
+
+                # Save the data
+                prop.Data = data_str
+
+            # Clear any extra properties beyond current row count
+            # (overwrite with empty string)
+            extra_index = row_count
+            while True:
+                prop_name = f"Anim{extra_index:02d}"
+                prop = prop_list.Find(prop_name)
+                if not prop:
+                    break
+                prop.Data = ""  # Clear the data
+                extra_index += 1
+
+            print(f"[Anim Exporter] Saved {row_count} animation(s) to note as individual properties")
 
         except Exception as e:
             print(f"[Anim Exporter] Error saving data: {str(e)}")
             logger.error(f"Failed to save data to note: {str(e)}")
 
+    def _create_animation_property(self, row_index, anim_data):
+        """
+        Create/update a custom property for a specific animation
+
+        Args:
+            row_index: The row number in the table (0-based)
+            anim_data: Dictionary with animation data
+        """
+        if not self.note_object:
+            print("[Anim Exporter] No note object available")
+            return
+
+        try:
+            # 1. Get AnimNoteData note object (already have it as self.note_object)
+            print(f"[Anim Exporter] Working with note: {self.note_object.Name}")
+            prop_list = self.note_object.PropertyList
+
+            # 2. Create property name (Anim00, Anim01, etc.)
+            prop_name = f"Anim{row_index:02d}"
+            print(f"[Anim Exporter] Creating/updating property: {prop_name}")
+
+            # 3. Convert data to JSON string first
+            data_str = json.dumps(anim_data)
+            print(f"[Anim Exporter] Data to save: {data_str}")
+
+            # 4. Find or create the custom property
+            prop = prop_list.Find(prop_name)
+
+            if not prop:
+                # Create new property using MotionBuilder SDK pattern
+                print(f"[Anim Exporter] Property '{prop_name}' not found, creating new...")
+
+                # PropertyCreate(pName, pType, pDataType, pAnimatable, pIsUser, pReferenceSource)
+                prop = self.note_object.PropertyCreate(
+                    prop_name,                      # pName: "Anim00", "Anim01", etc.
+                    FBPropertyType.kFBPT_charptr,   # pType: String type
+                    "String",                       # pDataType: MotionBuilder animation node type
+                    False,                          # pAnimatable: Not animatable
+                    True,                           # pIsUser: User/custom property (shows in UI)
+                    None                            # pReferenceSource: No reference
+                )
+
+                if prop:
+                    print(f"[Anim Exporter] Successfully created custom property: {prop_name}")
+                else:
+                    print(f"[Anim Exporter] ERROR: Failed to create property {prop_name}")
+                    return
+            else:
+                print(f"[Anim Exporter] Found existing property: {prop_name}")
+
+            # 5. Set Custom Property.Data to JSON entry
+            if prop:
+                prop.Data = data_str
+                print(f"[Anim Exporter] Set data for {prop_name}")
+
+                # Verify the data was set
+                verify_data = prop.Data
+                print(f"[Anim Exporter] Verified data: {verify_data}")
+            else:
+                print(f"[Anim Exporter] ERROR: Property object is None")
+
+        except Exception as e:
+            print(f"[Anim Exporter] ERROR creating animation property: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            logger.error(f"Failed to create animation property: {str(e)}")
+
     def on_table_data_changed(self, item):
-        """Handle table data changes and save to note"""
-        print(f"[Anim Exporter] Table data changed at row {item.row()}, column {item.column()}")
-        self.save_data_to_note()
+        """Handle table data changes and update the corresponding property"""
+        row = item.row()
+        print(f"[Anim Exporter] Table data changed at row {row}, column {item.column()}")
+
+        # Collect data for this specific row
+        try:
+            anim_data = {
+                'name': self.animation_table.item(row, 1).text(),
+                'start_frame': int(self.animation_table.item(row, 2).text()),
+                'end_frame': int(self.animation_table.item(row, 3).text()),
+                'namespace': self.animation_table.item(row, 4).text(),
+                'path': self.animation_table.item(row, 5).text()
+            }
+
+            # Update the property for this specific row
+            self._create_animation_property(row, anim_data)
+
+        except Exception as e:
+            print(f"[Anim Exporter] Error updating property for row {row}: {str(e)}")
 
     def _add_row_to_table(self, name, start_frame, end_frame, namespace, path):
         """Add a row to the table with the given data"""
@@ -468,8 +589,11 @@ class AnimExporterDialog(QDialog):
                 # Re-enable change tracking
                 self.animation_table.itemChanged.connect(self.on_table_data_changed)
 
-                # Save to note
-                self.save_data_to_note()
+                # Create custom property immediately for this new animation
+                self._create_animation_property(
+                    self.animation_table.rowCount() - 1,  # Last row added
+                    data
+                )
 
                 print(f"[Anim Exporter] Added animation: {data['name']}")
 
