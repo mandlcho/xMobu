@@ -268,6 +268,7 @@ class MenuBuilder:
             # Reload tool modules
             print("[xMobu] Reloading tool modules...")
             import mobu.tools.animation.keyframe_tools
+            import mobu.tools.animation.anim_exporter
             import mobu.tools.character.character_mapper_qt
             import mobu.tools.pipeline.scene_manager
             import mobu.tools.pipeline._settings_qt
@@ -276,6 +277,7 @@ class MenuBuilder:
             import mobu.tools.debug.random_objects
 
             importlib.reload(mobu.tools.animation.keyframe_tools)
+            importlib.reload(mobu.tools.animation.anim_exporter)
             importlib.reload(mobu.tools.character.character_mapper_qt)
             importlib.reload(mobu.tools.character.constraint_manager_qt)
             importlib.reload(mobu.tools.pipeline.scene_manager)
