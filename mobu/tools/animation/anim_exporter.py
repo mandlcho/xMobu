@@ -524,8 +524,12 @@ class AnimExporterDialog(QDialog):
         # Main layout
         main_layout = QHBoxLayout(self)
 
-        # Left side - Table
+        # Left side - Table in GroupBox
         table_layout = QVBoxLayout()
+
+        # === Animations GroupBox ===
+        animations_group = QtWidgets.QGroupBox("Animations")
+        animations_group_layout = QVBoxLayout()
 
         # Create table widget with specified columns
         self.animation_table = QTableWidget()
@@ -572,7 +576,9 @@ class AnimExporterDialog(QDialog):
         self.animation_table.itemSelectionChanged.connect(self.on_selection_changed)
         self.animation_table.clicked.connect(self.on_cell_clicked)
 
-        table_layout.addWidget(self.animation_table)
+        animations_group_layout.addWidget(self.animation_table)
+        animations_group.setLayout(animations_group_layout)
+        table_layout.addWidget(animations_group)
 
         # Right side - Buttons with sections
         button_layout = QVBoxLayout()
