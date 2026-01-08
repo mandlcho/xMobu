@@ -760,12 +760,16 @@ class AnimExporterDialog(QDialog):
                 prop_name = f"anim{row:02d}"
 
                 # Collect animation data for this row
+                # Column 1 (Take) and Column 4 (Namespace) are now QComboBox widgets
+                take_combo = self.animation_table.cellWidget(row, 1)
+                namespace_combo = self.animation_table.cellWidget(row, 4)
+
                 anim_data = {
                     'name': self.animation_table.item(row, 0).text(),
-                    'take': self.animation_table.item(row, 1).text(),
+                    'take': take_combo.currentText() if take_combo else '',
                     'start_frame': int(self.animation_table.item(row, 2).text()),
                     'end_frame': int(self.animation_table.item(row, 3).text()),
-                    'namespace': self.animation_table.item(row, 4).text(),
+                    'namespace': namespace_combo.currentText() if namespace_combo else '',
                     'path': self.animation_table.item(row, 5).text()
                 }
 
@@ -887,6 +891,31 @@ class AnimExporterDialog(QDialog):
         except Exception as e:
             print(f"[Anim Exporter] Error updating property for row {row}: {str(e)}")
 
+    def _get_scene_takes_for_table(self):
+        """Get list of take names for table comboboxes"""
+        from pyfbsdk import FBSystem
+        takes = []
+        try:
+            scene = FBSystem().Scene
+            for take in scene.Takes:
+                takes.append(take.Name)
+        except Exception as e:
+            print(f"[Anim Exporter] Error getting takes for table: {str(e)}")
+        return takes
+
+    def _get_scene_characters_for_table(self):
+        """Get list of character names for table comboboxes"""
+        from pyfbsdk import FBCharacter, FBSystem
+        characters = []
+        try:
+            scene = FBSystem().Scene
+            for comp in scene.Components:
+                if isinstance(comp, FBCharacter):
+                    characters.append(comp.Name)
+        except Exception as e:
+            print(f"[Anim Exporter] Error getting characters for table: {str(e)}")
+        return sorted(characters)
+
     def _add_row_to_table(self, name, take, start_frame, end_frame, namespace, path):
         """Add a row to the table with the given data"""
         row_count = self.animation_table.rowCount()
@@ -896,10 +925,26 @@ class AnimExporterDialog(QDialog):
         name_item = QTableWidgetItem(name)
         self.animation_table.setItem(row_count, 0, name_item)
 
-        # Column 1: Take (centered)
-        take_item = QTableWidgetItem(take)
-        take_item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-        self.animation_table.setItem(row_count, 1, take_item)
+        # Column 1: Take - Embed QComboBox
+        take_combo = QComboBox()
+        take_combo.setEditable(False)
+
+        # Populate with scene takes
+        takes = self._get_scene_takes_for_table()
+        take_combo.addItem("")  # Empty option
+        for t in takes:
+            take_combo.addItem(t)
+
+        # Set the current value
+        if take:
+            index = take_combo.findText(take)
+            if index >= 0:
+                take_combo.setCurrentIndex(index)
+
+        # Connect to save changes
+        take_combo.currentTextChanged.connect(lambda: self.on_table_data_changed())
+
+        self.animation_table.setCellWidget(row_count, 1, take_combo)
 
         # Column 2: Start Frame (centered)
         start_item = QTableWidgetItem(str(start_frame))
@@ -911,10 +956,26 @@ class AnimExporterDialog(QDialog):
         end_item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
         self.animation_table.setItem(row_count, 3, end_item)
 
-        # Column 4: Namespace (centered)
-        namespace_item = QTableWidgetItem(namespace)
-        namespace_item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-        self.animation_table.setItem(row_count, 4, namespace_item)
+        # Column 4: Namespace - Embed QComboBox
+        namespace_combo = QComboBox()
+        namespace_combo.setEditable(False)
+
+        # Populate with scene characters
+        characters = self._get_scene_characters_for_table()
+        namespace_combo.addItem("")  # Empty option
+        for char in characters:
+            namespace_combo.addItem(char)
+
+        # Set the current value
+        if namespace:
+            index = namespace_combo.findText(namespace)
+            if index >= 0:
+                namespace_combo.setCurrentIndex(index)
+
+        # Connect to save changes
+        namespace_combo.currentTextChanged.connect(lambda: self.on_table_data_changed())
+
+        self.animation_table.setCellWidget(row_count, 4, namespace_combo)
 
         # Column 5: Path (centered)
         path_item = QTableWidgetItem(path)
