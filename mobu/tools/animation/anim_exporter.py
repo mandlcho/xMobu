@@ -760,9 +760,17 @@ class AnimExporterDialog(QDialog):
                 prop_name = f"anim{row:02d}"
 
                 # Collect animation data for this row
-                # Column 1 (Take) and Column 4 (Namespace) are now QComboBox widgets
+                # Column 1 (Take), Column 4 (Namespace), and Column 5 (Path) are now widgets
                 take_combo = self.animation_table.cellWidget(row, 1)
                 namespace_combo = self.animation_table.cellWidget(row, 4)
+                path_widget = self.animation_table.cellWidget(row, 5)
+
+                # Get path from the embedded QLineEdit
+                path_value = ''
+                if path_widget:
+                    path_edit = path_widget.findChild(QLineEdit)
+                    if path_edit:
+                        path_value = path_edit.text()
 
                 anim_data = {
                     'name': self.animation_table.item(row, 0).text(),
@@ -770,7 +778,7 @@ class AnimExporterDialog(QDialog):
                     'start_frame': int(self.animation_table.item(row, 2).text()),
                     'end_frame': int(self.animation_table.item(row, 3).text()),
                     'namespace': namespace_combo.currentText() if namespace_combo else '',
-                    'path': self.animation_table.item(row, 5).text()
+                    'path': path_value
                 }
 
                 # Convert to JSON string
@@ -977,10 +985,44 @@ class AnimExporterDialog(QDialog):
 
         self.animation_table.setCellWidget(row_count, 4, namespace_combo)
 
-        # Column 5: Path (centered)
-        path_item = QTableWidgetItem(path)
-        path_item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-        self.animation_table.setItem(row_count, 5, path_item)
+        # Column 5: Path - Embed path browser widget
+        path_widget = QtWidgets.QWidget()
+        path_layout = QHBoxLayout(path_widget)
+        path_layout.setContentsMargins(2, 2, 2, 2)
+        path_layout.setSpacing(2)
+
+        # Line edit for path
+        path_edit = QLineEdit()
+        path_edit.setText(path)
+        path_edit.setPlaceholderText("Select export directory...")
+        path_edit.setReadOnly(True)  # Make non-editable - must use browse button
+
+        # Browse button
+        browse_btn = QPushButton("...")
+        browse_btn.setMaximumWidth(30)
+        browse_btn.setMinimumWidth(30)
+
+        # Connect browse button to open directory dialog
+        def browse_directory():
+            directory = QFileDialog.getExistingDirectory(
+                self,
+                "Select Export Directory",
+                path_edit.text() or "",
+                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+            )
+            if directory:
+                path_edit.setText(directory)
+                self.on_table_data_changed()
+
+        browse_btn.clicked.connect(browse_directory)
+
+        # Note: No need to connect textChanged since it's read-only and changes only via browse button
+        # The browse_directory function already calls on_table_data_changed()
+
+        path_layout.addWidget(path_edit)
+        path_layout.addWidget(browse_btn)
+
+        self.animation_table.setCellWidget(row_count, 5, path_widget)
 
     def on_add_animation(self):
         """Handle Add Animation button click - show dialog"""
