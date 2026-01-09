@@ -516,6 +516,9 @@ class AnimExporterDialog(QDialog):
         # Load existing data from note
         self.load_data_from_note()
 
+        # Setup scene monitor listener
+        self.setup_scene_monitor()
+
     def setup_ui(self):
         """Setup the user interface"""
         self.setWindowTitle("Anim Exporter")
@@ -732,6 +735,22 @@ class AnimExporterDialog(QDialog):
         except Exception as e:
             print(f"[Anim Exporter] Error loading data from note: {str(e)}")
             logger.error(f"Failed to load data from note: {str(e)}")
+
+    def setup_scene_monitor(self):
+        """Setup scene monitor listener for namespace detection"""
+        try:
+            from mobu.utils.scene_monitor import get_scene_monitor
+            self.scene_monitor = get_scene_monitor()
+            self.scene_monitor.add_listener(self.on_scene_changed)
+            print("[Anim Exporter] Scene monitor listener registered")
+        except Exception as e:
+            print(f"[Anim Exporter] WARNING: Could not setup scene monitor: {str(e)}")
+            self.scene_monitor = None
+
+    def on_scene_changed(self, scene_info):
+        """Called when scene changes (file open/new/merge)"""
+        print(f"[Anim Exporter] Scene changed - Objects: {scene_info['object_count']}, Namespaces: {scene_info['namespaces']}")
+        # The namespace delegate will automatically use the updated scene info when opened
 
     def save_data_to_note(self):
         """Save animation data to individual custom properties (Anim00, Anim01, etc.)"""
@@ -1251,6 +1270,11 @@ class AnimExporterDialog(QDialog):
         """Handle dialog close event"""
         global _anim_exporter_dialog
         global _q_application_instance
+
+        # Remove scene monitor listener
+        if hasattr(self, 'scene_monitor') and self.scene_monitor:
+            self.scene_monitor.remove_listener(self.on_scene_changed)
+            print("[Anim Exporter] Scene monitor listener removed")
 
         self._is_closing = True
         _anim_exporter_dialog = None

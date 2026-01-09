@@ -61,6 +61,12 @@ def initialize():
         menu_builder = MenuBuilder()
         menu_builder.build_menu()
 
+        # Initialize Scene Monitor
+        print("[xMobu] Initializing scene monitor...")
+        from mobu.utils.scene_monitor import get_scene_monitor
+        scene_monitor = get_scene_monitor()
+        print("[xMobu] Scene monitor initialized and monitoring file events")
+
         print("[xMobu] ========================================")
         print("[xMobu] Initialization completed successfully!")
         print(f"[xMobu] Look for '{menu_name}' menu in the menu bar")
