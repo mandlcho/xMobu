@@ -119,7 +119,6 @@ class SceneMonitor:
 
             # Get all models in scene
             for comp in scene.Components:
-                # Skip cameras and lights for now - focus on models
                 if hasattr(comp, 'Name'):
                     name = comp.Name
 
@@ -127,9 +126,15 @@ class SceneMonitor:
                     self.scene_objects.append(comp)
 
                     # Check for namespace (format: namespace:objectname)
+                    # Only detect namespaces from FBModel objects (not cameras, lights, etc.)
                     if ':' in name:
-                        namespace = name.split(':')[0]
-                        self.namespaces.add(namespace)
+                        comp_type = comp.ClassName()
+                        # Only track namespaces from models, not cameras/lights/notes
+                        if 'Model' in comp_type and 'Camera' not in comp_type and 'Light' not in comp_type:
+                            namespace = name.split(':')[0]
+                            # Ignore single character or empty namespaces
+                            if namespace and len(namespace) > 1:
+                                self.namespaces.add(namespace)
 
             self.has_objects = len(self.scene_objects) > 0
 
